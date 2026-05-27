@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_su_photo_foreman,su.photo.foreman,model_su_photo,su_base.group_su_foreman,1,1,1,0
+access_su_photo_manager,su.photo.manager,model_su_photo,su_base.group_su_manager,1,1,1,0
+access_su_photo_admin,su.photo.admin,model_su_photo,su_base.group_su_admin,1,1,1,1
+access_su_photo_client,su.photo.client,model_su_photo,su_base.group_su_client,1,0,0,0

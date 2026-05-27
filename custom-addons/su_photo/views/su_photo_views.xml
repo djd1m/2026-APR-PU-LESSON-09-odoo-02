@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Photo Tree View -->
+    <record id="su_photo_view_tree" model="ir.ui.view">
+        <field name="name">su.photo.tree</field>
+        <field name="model">su.photo</field>
+        <field name="arch" type="xml">
+            <tree string="Фотофиксация">
+                <field name="taken_at"/>
+                <field name="project_id"/>
+                <field name="task_id"/>
+                <field name="description"/>
+                <field name="author_id" widget="many2one_avatar_user"/>
+                <field name="latitude" optional="hide"/>
+                <field name="longitude" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Photo Form View -->
+    <record id="su_photo_view_form" model="ir.ui.view">
+        <field name="name">su.photo.form</field>
+        <field name="model">su.photo</field>
+        <field name="arch" type="xml">
+            <form string="Фото">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="task_id"
+                                   domain="[('project_id', '=', project_id)]"/>
+                            <field name="author_id"/>
+                            <field name="taken_at"/>
+                        </group>
+                        <group>
+                            <field name="image" widget="image"
+                                   options="{'size': [600, 400]}"/>
+                            <field name="image_filename" invisible="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description"/>
+                    </group>
+                    <group string="Геолокация">
+                        <group>
+                            <field name="latitude"/>
+                        </group>
+                        <group>
+                            <field name="longitude"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Photo Kanban View (gallery-style) -->
+    <record id="su_photo_view_kanban" model="ir.ui.view">
+        <field name="name">su.photo.kanban</field>
+        <field name="model">su.photo</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="image"/>
+                <field name="project_id"/>
+                <field name="task_id"/>
+                <field name="taken_at"/>
+                <field name="description"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_image">
+                                <img t-att-src="kanban_image('su.photo', 'image', record.id.raw_value)"
+                                     alt="Photo" class="o_image_64_contain"/>
+                            </div>
+                            <div class="oe_kanban_details">
+                                <strong><field name="project_id"/></strong>
+                                <div><field name="task_id"/></div>
+                                <div class="text-muted"><field name="taken_at"/></div>
+                                <div><field name="description"/></div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="su_photo_action" model="ir.actions.act_window">
+        <field name="name">Фотофиксация</field>
+        <field name="res_model">su.photo</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Загрузите первое фото с объекта
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem id="su_photo_menu"
+              name="Фото"
+              parent="su_project.su_main_menu"
+              action="su_photo_action"
+              sequence="40"/>
+
+</odoo>
