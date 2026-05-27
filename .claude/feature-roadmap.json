@@ -5,14 +5,16 @@
     "name": "AI-сметчик по ГЭСН/ФЕР",
     "description": "Генерация сметы по ГЭСН/ФЕР из текстового описания или чертежа. RAG-поиск по нормативной базе, применение индексов Минстроя, AI-подсказки по оптимизации, экспорт PDF/Excel, usage-based billing.",
     "priority": "mvp",
-    "status": "planned",
+    "status": "done",
     "depends_on": [],
     "files_estimate": [
       "addons/stroyuprav_estimate/",
       "ai_service/estimate_engine/",
       "ai_service/drawing_parser/",
       "data/gesn_fer/"
-    ]
+    ],
+    "branch": "feature/001-ai-estimator",
+    "review": "done"
   },
   {
     "id": "project-dashboard",
@@ -35,7 +37,9 @@
     "description": "Создание задач, назначение на бригаду, сроки, приоритеты. State machine: новая -> в работе -> на проверке -> выполнена. Подзадачи, зависимости finish-to-start, массовые операции, комментарии с @-mention.",
     "priority": "mvp",
     "status": "planned",
-    "depends_on": ["project-dashboard"],
+    "depends_on": [
+      "project-dashboard"
+    ],
     "files_estimate": [
       "addons/stroyuprav_task/",
       "addons/stroyuprav_task/models/",
@@ -49,7 +53,9 @@
     "description": "Фото с автоматическим геотегом и timestamp, привязка к задаче/этапу. Авто-обновление прогресса при загрузке. Offline-режим с sync queue. Галерея объекта с фильтрами. Хранение в MinIO S3.",
     "priority": "mvp",
     "status": "planned",
-    "depends_on": ["task-management"],
+    "depends_on": [
+      "task-management"
+    ],
     "files_estimate": [
       "addons/stroyuprav_photo/",
       "addons/stroyuprav_photo/models/",
@@ -63,7 +69,10 @@
     "description": "Факт vs план по каждому объекту, этапу, категории. Регистрация расходов с чеками. AI-алерты при отклонении > 10%. Бюджетные отчёты с графиками, экспорт PDF/Excel. Materialized views + Redis cache.",
     "priority": "mvp",
     "status": "planned",
-    "depends_on": ["project-dashboard", "ai-estimator"],
+    "depends_on": [
+      "project-dashboard",
+      "ai-estimator"
+    ],
     "files_estimate": [
       "addons/stroyuprav_project/models/budget.py",
       "addons/stroyuprav_project/views/budget_views.xml",
@@ -77,7 +86,10 @@
     "description": "Progressive Web App с Service Worker для кэширования. Offline-first: задачи (read/write), фото (write), данные объекта (read). Sync queue с conflict resolution (server wins). Mobile-optimized UI 320-428px. Web Push API.",
     "priority": "mvp",
     "status": "planned",
-    "depends_on": ["task-management", "photo-reports"],
+    "depends_on": [
+      "task-management",
+      "photo-reports"
+    ],
     "files_estimate": [
       "addons/stroyuprav_project/static/src/",
       "addons/stroyuprav_task/static/src/",
@@ -91,7 +103,9 @@
     "description": "Quiz из 4 вопросов: роль, размер команды, тип работ, текущие инструменты. Персонализация dashboard layout, предзаполнение шаблонов задач, рекомендация тарифного плана. Возможность пропуска.",
     "priority": "mvp",
     "status": "planned",
-    "depends_on": ["auth-billing"],
+    "depends_on": [
+      "auth-billing"
+    ],
     "files_estimate": [
       "addons/stroyuprav_onboarding/",
       "addons/stroyuprav_onboarding/models/",
@@ -104,13 +118,15 @@
     "name": "Auth & Billing",
     "description": "Регистрация email/телефон, JWT в httpOnly cookies (access 15min, refresh 7d). RBAC: owner/manager/foreman/viewer. Multi-tenant с row-level security. 4 тарифных плана, trial 14 дней. ЮKassa: карты, СБП, рекуррентные платежи, HMAC webhooks.",
     "priority": "mvp",
-    "status": "planned",
+    "status": "done",
     "depends_on": [],
     "files_estimate": [
       "addons/stroyuprav_billing/",
       "addons/stroyuprav_billing/models/",
       "addons/stroyuprav_billing/controllers/"
-    ]
+    ],
+    "branch": "feature/008-auth-billing",
+    "review": "done"
   },
   {
     "id": "gantt-chart",
@@ -119,7 +135,9 @@
     "description": "Визуализация задач с зависимостями и milestones. Интерактивный drag-and-drop для изменения сроков. Критический путь. Интеграция с существующей системой задач и зависимостей.",
     "priority": "next",
     "status": "planned",
-    "depends_on": ["task-management"],
+    "depends_on": [
+      "task-management"
+    ],
     "files_estimate": [
       "addons/stroyuprav_task/static/src/gantt/",
       "addons/stroyuprav_task/views/gantt_views.xml"
@@ -132,7 +150,10 @@
     "description": "Генерация актов выполненных работ КС-2 и справок о стоимости КС-3 по ГОСТ Р 7.0.97-2016. Автоматическое заполнение из данных задач и смет. Расчёт НДС, накладных, сметной прибыли. Экспорт в PDF.",
     "priority": "next",
     "status": "planned",
-    "depends_on": ["ai-estimator", "task-management"],
+    "depends_on": [
+      "ai-estimator",
+      "task-management"
+    ],
     "files_estimate": [
       "ai_service/estimate_engine/ks_generator.py",
       "addons/stroyuprav_estimate/models/ks_documents.py",
@@ -146,7 +167,11 @@
     "description": "View-only React SPA для заказчиков: прогресс объекта, фотогалерея, бюджет. Отдельный UX от ERP. Доступ по приглашению (email link). Read-only API с ограниченными данными.",
     "priority": "next",
     "status": "planned",
-    "depends_on": ["project-dashboard", "photo-reports", "budget-realtime"],
+    "depends_on": [
+      "project-dashboard",
+      "photo-reports",
+      "budget-realtime"
+    ],
     "files_estimate": [
       "portal/src/",
       "addons/stroyuprav_portal/",
@@ -160,7 +185,11 @@
     "description": "Утренний дайджест, AI-алерты по бюджету, напоминания о сроках, уведомления при назначении задач и @-mention в комментариях. Web Push API + Celery beat для расписания.",
     "priority": "next",
     "status": "planned",
-    "depends_on": ["task-management", "budget-realtime", "mobile-pwa"],
+    "depends_on": [
+      "task-management",
+      "budget-realtime",
+      "mobile-pwa"
+    ],
     "files_estimate": [
       "addons/stroyuprav_project/models/notification.py",
       "addons/stroyuprav_task/models/notification.py"
@@ -173,7 +202,9 @@
     "description": "Приглашение субподрядчиков через реферальные ссылки. Скидки на подписку за привлечённых пользователей. Tracking конверсий, dashboard рефералов.",
     "priority": "next",
     "status": "planned",
-    "depends_on": ["auth-billing"],
+    "depends_on": [
+      "auth-billing"
+    ],
     "files_estimate": [
       "addons/stroyuprav_billing/models/referral.py",
       "addons/stroyuprav_billing/views/referral_views.xml"
@@ -186,7 +217,9 @@
     "description": "PDF/link сметы с логотипом компании и «Создано в СтройУправ» watermark. Product-led viral growth: заказчик получает смету -> видит бренд -> регистрируется.",
     "priority": "next",
     "status": "planned",
-    "depends_on": ["ai-estimator"],
+    "depends_on": [
+      "ai-estimator"
+    ],
     "files_estimate": [
       "addons/stroyuprav_estimate/report/branded_template.xml",
       "addons/stroyuprav_estimate/controllers/share.py"
@@ -199,7 +232,10 @@
     "description": "Поиск верифицированных бригад с рейтингом и отзывами. Фильтрация по специализации, региону, рейтингу. Профили подрядчиков с портфолио. Комиссия 3-5% с платформы.",
     "priority": "planned",
     "status": "planned",
-    "depends_on": ["auth-billing", "project-dashboard"],
+    "depends_on": [
+      "auth-billing",
+      "project-dashboard"
+    ],
     "files_estimate": [
       "addons/stroyuprav_marketplace/",
       "addons/stroyuprav_marketplace/models/",
@@ -213,7 +249,10 @@
     "description": "Экспорт/импорт данных в 1С:Бухгалтерию. Синхронизация контрагентов, платежей, актов. REST API или файловый обмен (XML). Не заменять 1С — интегрироваться.",
     "priority": "planned",
     "status": "planned",
-    "depends_on": ["auth-billing", "auto-ks2-ks3"],
+    "depends_on": [
+      "auth-billing",
+      "auto-ks2-ks3"
+    ],
     "files_estimate": [
       "addons/stroyuprav_1c_integration/",
       "addons/stroyuprav_1c_integration/models/",
@@ -227,7 +266,10 @@
     "description": "Просмотр BIM-моделей (IFC формат) в браузере. Привязка задач к элементам BIM-модели. Визуализация прогресса на 3D-модели. Соответствие требованиям ТИМ (обязательно с 2024).",
     "priority": "planned",
     "status": "planned",
-    "depends_on": ["project-dashboard", "task-management"],
+    "depends_on": [
+      "project-dashboard",
+      "task-management"
+    ],
     "files_estimate": [
       "addons/stroyuprav_bim/",
       "addons/stroyuprav_bim/static/src/"
@@ -240,7 +282,11 @@
     "description": "ML-модель на основе исторических данных проектов. Прогнозирование задержек по паттернам: погода, сезонность, тип работ, подрядчик. Proactive alerts руководителю. Fine-tuning на данных платформы.",
     "priority": "planned",
     "status": "planned",
-    "depends_on": ["task-management", "budget-realtime", "ai-estimator"],
+    "depends_on": [
+      "task-management",
+      "budget-realtime",
+      "ai-estimator"
+    ],
     "files_estimate": [
       "ai_service/analytics_engine/delay_predictor.py",
       "ai_service/analytics_engine/ml_pipeline/"
