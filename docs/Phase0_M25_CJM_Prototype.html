@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CJM Prototype — СтройУправ (Odoo-клон для строительства и ремонта РФ)</title>
+<style>
+  :root {
+    --amber-50: #fffbeb; --amber-100: #fef3c7; --amber-200: #fde68a;
+    --amber-400: #fbbf24; --amber-500: #f59e0b; --amber-600: #d97706; --amber-700: #b45309; --amber-800: #92400e;
+    --blue-50: #eff6ff; --blue-100: #dbeafe; --blue-200: #bfdbfe;
+    --blue-400: #60a5fa; --blue-500: #3b82f6; --blue-600: #2563eb; --blue-700: #1d4ed8; --blue-800: #1e40af;
+    --emerald-50: #ecfdf5; --emerald-100: #d1fae5; --emerald-200: #a7f3d0;
+    --emerald-400: #34d399; --emerald-500: #10b981; --emerald-600: #059669; --emerald-700: #047857; --emerald-800: #065f46;
+    --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-300: #cbd5e1;
+    --slate-500: #64748b; --slate-600: #475569; --slate-700: #334155; --slate-800: #1e293b; --slate-900: #0f172a;
+    --red-500: #ef4444; --red-600: #dc2626;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--slate-50); color: var(--slate-800); line-height: 1.6; }
+
+  /* ═══ HEADER ═══ */
+  .header { background: linear-gradient(135deg, var(--amber-600), var(--amber-800)); color: white; padding: 2rem; text-align: center; }
+  .header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+  .header .subtitle { opacity: 0.9; font-size: 1.1rem; }
+  .header .meta { margin-top: 1rem; font-size: 0.85rem; opacity: 0.7; }
+
+  /* ═══ TABS ═══ */
+  .tabs { display: flex; justify-content: center; gap: 0; background: var(--slate-800); position: sticky; top: 0; z-index: 100; }
+  .tab { padding: 1rem 2rem; cursor: pointer; font-weight: 600; font-size: 0.95rem; border: none; background: transparent;
+         color: var(--slate-300); transition: all 0.3s; border-bottom: 3px solid transparent; }
+  .tab:hover { color: white; background: rgba(255,255,255,0.05); }
+  .tab.active-a { color: var(--amber-400); border-bottom-color: var(--amber-400); background: rgba(251,191,36,0.1); }
+  .tab.active-b { color: var(--blue-400); border-bottom-color: var(--blue-400); background: rgba(96,165,250,0.1); }
+  .tab.active-c { color: var(--emerald-400); border-bottom-color: var(--emerald-400); background: rgba(52,211,153,0.1); }
+  .tab.active-compare { color: white; border-bottom-color: white; background: rgba(255,255,255,0.1); }
+
+  /* ═══ VARIANT PANEL ═══ */
+  .variant { display: none; }
+  .variant.active { display: block; }
+
+  /* ═══ SCREEN ═══ */
+  .screen { max-width: 900px; margin: 2rem auto; background: white; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            overflow: hidden; border: 1px solid var(--slate-200); }
+  .screen-header { padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+  .screen-header h2 { font-size: 1.3rem; }
+  .screen-header .badge { padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+  .badge-a { background: var(--amber-100); color: var(--amber-800); }
+  .badge-b { background: var(--blue-100); color: var(--blue-800); }
+  .badge-c { background: var(--emerald-100); color: var(--emerald-800); }
+  .screen-body { padding: 0 2rem 2rem; }
+  .screen-body p { margin-bottom: 1rem; color: var(--slate-600); }
+
+  /* CJM overlay */
+  .cjm-overlay { margin-top: 1rem; padding: 1rem 1.5rem; border-radius: 12px; font-size: 0.85rem; }
+  .cjm-overlay.a { background: var(--amber-50); border: 1px solid var(--amber-200); }
+  .cjm-overlay.b { background: var(--blue-50); border: 1px solid var(--blue-200); }
+  .cjm-overlay.c { background: var(--emerald-50); border: 1px solid var(--emerald-200); }
+  .cjm-overlay table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+  .cjm-overlay td { padding: 0.3rem 0.5rem; vertical-align: top; }
+  .cjm-overlay td:first-child { font-weight: 600; white-space: nowrap; width: 140px; }
+  .cjm-overlay .micro-trend { display: inline-block; background: var(--slate-100); padding: 0.15rem 0.5rem; border-radius: 4px;
+                               font-size: 0.75rem; margin: 0.15rem 0.1rem; }
+
+  /* ═══ PHONE MOCKUP ═══ */
+  .phone { width: 340px; margin: 1.5rem auto; background: var(--slate-900); border-radius: 32px; padding: 12px;
+           box-shadow: 0 8px 32px rgba(0,0,0,0.25); }
+  .phone-screen { background: white; border-radius: 24px; overflow: hidden; min-height: 500px; }
+  .phone-status { background: var(--slate-900); color: white; padding: 0.5rem 1.5rem; font-size: 0.7rem; display: flex;
+                  justify-content: space-between; }
+  .phone-content { padding: 1.5rem; }
+  .phone-content h3 { font-size: 1.2rem; margin-bottom: 0.75rem; line-height: 1.3; }
+  .phone-content .sub { color: var(--slate-500); font-size: 0.9rem; margin-bottom: 1.5rem; }
+  .phone-btn { display: block; width: 100%; padding: 1rem; border: none; border-radius: 12px; font-size: 1rem;
+               font-weight: 600; cursor: pointer; text-align: center; margin-bottom: 0.75rem; }
+  .phone-btn.primary-a { background: var(--amber-500); color: white; }
+  .phone-btn.primary-b { background: var(--blue-500); color: white; }
+  .phone-btn.primary-c { background: var(--emerald-500); color: white; }
+  .phone-btn.secondary { background: var(--slate-100); color: var(--slate-700); }
+
+  .quiz-q { background: var(--slate-50); padding: 1rem; border-radius: 12px; margin-bottom: 0.75rem; }
+  .quiz-q .q-label { font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .quiz-opt { padding: 0.4rem 0.8rem; background: white; border: 1px solid var(--slate-200); border-radius: 8px;
+              font-size: 0.8rem; cursor: pointer; }
+  .quiz-opt:hover { border-color: var(--amber-400); }
+
+  .kpi-card { background: linear-gradient(135deg, var(--slate-800), var(--slate-900)); color: white; border-radius: 16px;
+              padding: 1.5rem; margin-bottom: 1rem; text-align: center; }
+  .kpi-card .value { font-size: 2rem; font-weight: 700; }
+  .kpi-card .label { font-size: 0.8rem; opacity: 0.7; margin-top: 0.25rem; }
+
+  .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+  .feature-item { background: var(--slate-50); padding: 0.75rem; border-radius: 10px; text-align: center; font-size: 0.85rem; }
+  .feature-item .icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+
+  /* ═══ COMPARE TABLE ═══ */
+  .compare-table { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+  .compare-table h2 { text-align: center; margin-bottom: 1.5rem; }
+  .compare-table table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden;
+                         box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .compare-table th { padding: 1rem; background: var(--slate-800); color: white; font-size: 0.85rem; text-align: left; }
+  .compare-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--slate-100); font-size: 0.85rem; vertical-align: top; }
+  .compare-table tr:hover { background: var(--slate-50); }
+  .compare-table .dim-label { font-weight: 600; background: var(--slate-50); }
+
+  /* ═══ SCORING ═══ */
+  .scoring { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+  .scoring h2 { text-align: center; margin-bottom: 1.5rem; }
+  .score-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+  .score-card { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+                border: 2px solid transparent; text-align: center; }
+  .score-card.winner { border-color: var(--amber-400); }
+  .score-card h3 { margin-bottom: 1rem; }
+  .score-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--slate-100);
+                font-size: 0.85rem; }
+  .score-total { font-size: 1.5rem; font-weight: 700; margin-top: 1rem; }
+
+  /* ═══ SOURCES ═══ */
+  .sources { max-width: 900px; margin: 2rem auto; padding: 2rem; background: white; border-radius: 16px;
+             box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .sources h2 { margin-bottom: 1rem; }
+  .sources ul { list-style: none; }
+  .sources li { padding: 0.4rem 0; font-size: 0.85rem; }
+  .sources a { color: var(--blue-600); text-decoration: none; }
+  .sources a:hover { text-decoration: underline; }
+
+  /* ═══ RESPONSIVE ═══ */
+  @media (max-width: 768px) {
+    .tabs { flex-wrap: wrap; }
+    .tab { flex: 1; min-width: 80px; padding: 0.75rem 0.5rem; font-size: 0.8rem; }
+    .screen { margin: 1rem; border-radius: 12px; }
+    .score-cards { grid-template-columns: 1fr; }
+    .feature-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<div class="header">
+  <h1>🏗️ СтройУправ — CJM Prototype</h1>
+  <div class="subtitle">3 варианта Customer Journey Map для Odoo-клона в нише строительства и ремонта (РФ)</div>
+  <div class="meta">Режим: DEEP | Дата: 2026-05-27 | Основано на Module 2 анализе 3 сегментов и 8 микротрендов</div>
+</div>
+
+<!-- ═══════════ TABS ═══════════ -->
+<div class="tabs">
+  <button class="tab active-a" onclick="showVariant('a')" id="tab-a">🔶 A: Прораб-автопилот</button>
+  <button class="tab" onclick="showVariant('b')" id="tab-b">🔷 B: Экосистема доверия</button>
+  <button class="tab" onclick="showVariant('c')" id="tab-c">🟢 C: AI-сметчик</button>
+  <button class="tab" onclick="showVariant('compare')" id="tab-compare">⚖️ Сравнение</button>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  VARIANT A: ПРОРАБ-АВТОПИЛОТ                               ║
+     ║  Aha: real-time dashboard всех объектов                     ║
+     ║  Entry: Functional Job Segment 1 (управляй 10 объектами)   ║
+     ║  Paywall: после Aha (увидел пользу — плати)                ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="variant active" id="variant-a">
+
+  <!-- SCREEN 1: Landing -->
+  <div class="screen">
+    <div class="screen-header">
+      <h2>📱 1. Landing (Awareness)</h2>
+      <span class="badge badge-a">AARRR: Acquisition</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <div style="text-align:center; padding: 1rem 0;">
+              <div style="font-size: 3rem;">🏗️</div>
+              <h3>10 объектов. 5 бригад.<br>Один экран.</h3>
+              <p class="sub">СтройУправ — управляй стройкой как диспетчер, а не как пожарный. Сметы, бригады, бюджет, фотоотчёты — всё в одном приложении.</p>
+              <button class="phone-btn primary-a">Попробовать бесплатно — 14 дней</button>
+              <button class="phone-btn secondary">Посмотреть демо за 3 минуты</button>
+              <div style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--slate-500);">
+                <div>⭐ 4.7 — 2,300+ компаний уже перешли с Excel</div>
+                <div style="margin-top: 0.5rem;">🇷🇺 Российское ПО · ГЭСН/ФЕР · КС-2/КС-3</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay a">
+        <strong>📊 CJM Overlay — Landing</strong>
+        <table>
+          <tr><td>Stage:</td><td>Awareness → Consideration</td></tr>
+          <tr><td>AARRR:</td><td>Acquisition</td></tr>
+          <tr><td>Цель экрана:</td><td>Конвертировать прораба/руководителя в trial за &lt;30 сек</td></tr>
+          <tr><td>Сегмент:</td><td>Ремонтная компания (5-50 чел.), Functional Job: «Управлять 10 объектами без хаоса»</td></tr>
+          <tr><td>Входная точка:</td><td>Яндекс.Директ: «ERP для строительной компании»; таргет ВК на руководителей строительных компаний</td></tr>
+          <tr><td>Микротренды:</td><td>
+            <span class="micro-trend">📱 Mobile-first прораб</span>
+            <span class="micro-trend">📊 Прозрачность = валюта</span>
+            <span class="micro-trend">⚡ Отклик &lt;30 мин</span>
+          </td></tr>
+          <tr><td>Валидация:</td><td>CTR > 3%? Конверсия landing→trial > 8%?</td></tr>
+          <tr><td>Источник:</td><td><a href="https://blogs.forbes.ru/2025/12/30/rynok-remonta-i-stroitelstva-cifrovaja-zrelost-doverie-i-novaja-struktura-sprosa/" target="_blank">Forbes.ru: прозрачность — главный критерий выбора</a></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Onboarding -->
+  <div class="screen">
+    <div class="screen-header">
+      <h2>📝 2. Onboarding (Activation)</h2>
+      <span class="badge badge-a">AARRR: Activation</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:42</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <h3>Настроим за 3 минуты</h3>
+            <p class="sub">Ответьте на 4 вопроса — система адаптируется под ваш бизнес</p>
+
+            <div class="quiz-q">
+              <div class="q-label">1. Чем занимается компания?</div>
+              <div class="quiz-opts">
+                <span class="quiz-opt">🏠 Ремонт квартир</span>
+                <span class="quiz-opt">🏗️ Капстроительство</span>
+                <span class="quiz-opt">🏡 ИЖС</span>
+                <span class="quiz-opt">🔧 Отделка</span>
+                <span class="quiz-opt">⚡ Инженерные сети</span>
+              </div>
+            </div>
+            <div class="quiz-q">
+              <div class="q-label">2. Сколько объектов ведёте одновременно?</div>
+              <div class="quiz-opts">
+                <span class="quiz-opt">1-3</span>
+                <span class="quiz-opt">4-10</span>
+                <span class="quiz-opt">11-30</span>
+                <span class="quiz-opt">30+</span>
+              </div>
+            </div>
+            <div class="quiz-q">
+              <div class="q-label">3. Как сейчас ведёте учёт?</div>
+              <div class="quiz-opts">
+                <span class="quiz-opt">📊 Excel</span>
+                <span class="quiz-opt">📱 WhatsApp/Telegram</span>
+                <span class="quiz-opt">🏢 1С</span>
+                <span class="quiz-opt">📝 Блокнот</span>
+              </div>
+            </div>
+            <div class="quiz-q">
+              <div class="q-label">4. Что болит больше всего?</div>
+              <div class="quiz-opts">
+                <span class="quiz-opt">💸 Непрозрачный бюджет</span>
+                <span class="quiz-opt">⏰ Срывы сроков</span>
+                <span class="quiz-opt">👷 Контроль бригад</span>
+                <span class="quiz-opt">📄 Документы КС-2</span>
+              </div>
+            </div>
+            <button class="phone-btn primary-a" style="margin-top: 1rem;">Создать мой первый объект →</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay a">
+        <strong>📊 CJM Overlay — Onboarding</strong>
+        <table>
+          <tr><td>Stage:</td><td>Activation (первые 5 минут)</td></tr>
+          <tr><td>AARRR:</td><td>Activation</td></tr>
+          <tr><td>Цель экрана:</td><td>Персонализировать интерфейс → ускорить Time-to-Aha</td></tr>
+          <tr><td>Механика:</td><td>Progressive profiling: 4 вопроса → адаптация интерфейса, модулей, шаблонов смет</td></tr>
+          <tr><td>Триггеры из M2:</td><td>«Убыточный объект», «уход прораба с данными в голове», «некогда — работа горит»</td></tr>
+          <tr><td>Микротренды:</td><td>
+            <span class="micro-trend">🤖 AI-персонализация</span>
+            <span class="micro-trend">⚡ Time-to-value &lt;5 мин</span>
+          </td></tr>
+          <tr><td>Валидация:</td><td>Completion rate > 70%? Время до создания первого объекта &lt;5 мин?</td></tr>
+          <tr><td>Источник:</td><td><a href="https://planfact.io/blog/posts/upravlencheskij-uchet-v-stroitelnoj-kompanii" target="_blank">Planfact: специфика управленческого учёта в строительстве</a></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: Aha Moment -->
+  <div class="screen">
+    <div class="screen-header">
+      <h2>⚡ 3. Aha Moment</h2>
+      <span class="badge badge-a">AARRR: Activation → Retention</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:45</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <h3>Ваш первый объект готов!</h3>
+            <div class="kpi-card">
+              <div style="font-size: 0.8rem; opacity: 0.7;">Все ваши объекты — одним взглядом</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                <div><div class="value" style="font-size: 1.3rem;">3</div><div class="label">объекта</div></div>
+                <div><div class="value" style="font-size: 1.3rem; color: var(--emerald-400);">67%</div><div class="label">прогресс</div></div>
+                <div><div class="value" style="font-size: 1.3rem; color: var(--amber-400);">₽2.1М</div><div class="label">бюджет</div></div>
+              </div>
+            </div>
+
+            <div class="feature-grid">
+              <div class="feature-item"><div class="icon">📊</div>Бюджет real-time</div>
+              <div class="feature-item"><div class="icon">👷</div>Бригады на карте</div>
+              <div class="feature-item"><div class="icon">📸</div>Фотоотчёты</div>
+              <div class="feature-item"><div class="icon">⏰</div>Gantt-график</div>
+            </div>
+
+            <div style="background: var(--amber-50); padding: 0.75rem; border-radius: 10px; font-size: 0.85rem; margin-top: 0.5rem;">
+              <strong>🤖 AI-подсказка:</strong> «По объекту "Квартира на Ленина" вижу задержку в 3 дня на этапе электрики. Рекомендую перебросить бригаду Петрова.»
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay a">
+        <strong>📊 CJM Overlay — Aha Moment</strong>
+        <table>
+          <tr><td>Stage:</td><td>Aha! (первые 10 минут)</td></tr>
+          <tr><td>Aha суть:</td><td><strong>«Я вижу ВСЕ свои объекты в одном экране — и AI подсказывает что делать!»</strong></td></tr>
+          <tr><td>Эмоция:</td><td>Облегчение + контроль. «Наконец-то я не вслепую!»</td></tr>
+          <tr><td>Сегмент:</td><td>Ремонтная компания, Emotional Job: «Хочу спать спокойно»</td></tr>
+          <tr><td>Микротренды:</td><td>
+            <span class="micro-trend">🤖 AI-агент прораба</span>
+            <span class="micro-trend">🏗️ Digital twin объекта</span>
+            <span class="micro-trend">📱 Mobile-first</span>
+          </td></tr>
+          <tr><td>Валидация:</td><td>% пользователей, добавивших 2+ объект в первый день > 30%?</td></tr>
+          <tr><td>Источник:</td><td>
+            <a href="https://www.autodesk.com/blogs/construction/2026-ai-trends-25-experts-share-insights/" target="_blank">Autodesk: AI-агенты — нервная система стройки 2026</a>,
+            <a href="https://remont-crm.ru/" target="_blank">РемонтCRM: управление с мобильного</a>
+          </td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: Dashboard (Core Loop) -->
+  <div class="screen">
+    <div class="screen-header">
+      <h2>🔄 4. Core Loop (Retention)</h2>
+      <span class="badge badge-a">AARRR: Retention</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>14:30</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <h3 style="font-size: 1rem;">📋 Рабочий день прораба</h3>
+            <div style="background: var(--red-500); color: white; padding: 0.75rem; border-radius: 10px; margin: 0.75rem 0; font-size: 0.85rem;">
+              🔔 <strong>3 алерта:</strong> Отставание на «Офис Сити» | Материалы не доставлены на «Лофт» | Акт КС-2 ждёт подписи
+            </div>
+            <div style="font-size: 0.85rem;">
+              <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--slate-100); display: flex; justify-content: space-between;">
+                <span>📸 Фотоотчёт: Квартира Ленина</span><span style="color: var(--emerald-500);">✅ Отправлен</span>
+              </div>
+              <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--slate-100); display: flex; justify-content: space-between;">
+                <span>💰 P&L за неделю</span><span style="color: var(--amber-600);">−₽43K от плана</span>
+              </div>
+              <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--slate-100); display: flex; justify-content: space-between;">
+                <span>👷 Бригада Иванова</span><span>Объект «Лофт», этаж 3</span>
+              </div>
+              <div style="padding: 0.5rem 0; display: flex; justify-content: space-between;">
+                <span>📄 КС-2 / КС-3</span><span style="color: var(--blue-500);">Авто-формирование</span>
+              </div>
+            </div>
+            <button class="phone-btn primary-a" style="margin-top: 1rem;">Утренний обход → Фотофиксация</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay a">
+        <strong>📊 CJM Overlay — Core Loop</strong>
+        <table>
+          <tr><td>Stage:</td><td>Daily engagement (Retention)</td></tr>
+          <tr><td>Hook:</td><td><strong>Push-уведомления + утренний дайджест + AI-алерты</strong></td></tr>
+          <tr><td>Частота:</td><td>Ежедневно: утренний обход → фотофиксация → вечерний P&L</td></tr>
+          <tr><td>Привычка:</td><td>Прораб открывает приложение как первое действие на объекте</td></tr>
+          <tr><td>Микротренды:</td><td>
+            <span class="micro-trend">📋 Auto-КС-2/КС-3</span>
+            <span class="micro-trend">🤖 AI-прогноз задержек</span>
+            <span class="micro-trend">📸 Фотофиксация → прогресс</span>
+            <span class="micro-trend">🔄 Экосистема подрядчиков</span>
+          </td></tr>
+          <tr><td>Валидация:</td><td>DAU/MAU > 40%? Среднее время в приложении > 15 мин/день?</td></tr>
+          <tr><td>Источник:</td><td>
+            <a href="https://cifrastroy.ru/news/chem-zapomnitsja-2024-god-i-chto-zhdet-stroitelnuju-otrasl-v-2025-m" target="_blank">Cifrastroy: фотофиксация и строительный контроль</a>,
+            <a href="https://101-app.com/blog/simplify-reports-in-construction" target="_blank">101-app: упрощение отчётов</a>
+          </td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 5: Paywall -->
+  <div class="screen">
+    <div class="screen-header">
+      <h2>💳 5. Paywall (Revenue)</h2>
+      <span class="badge badge-a">AARRR: Revenue</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <h3>Вы сэкономили ₽127 000 за 14 дней trial</h3>
+            <p class="sub">Продолжайте управлять объектами без хаоса</p>
+
+            <div style="border: 2px solid var(--amber-400); border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div><strong>Бригадир</strong><div style="font-size: 0.8rem; color: var(--slate-500);">до 5 объектов, 2 пользователя</div></div>
+                <div style="text-align: right;"><div style="font-size: 1.3rem; font-weight: 700;">₽2 990</div><div style="font-size: 0.75rem; color: var(--slate-500);">/мес</div></div>
+              </div>
+            </div>
+            <div style="border: 1px solid var(--slate-200); border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div><strong>Компания</strong><div style="font-size: 0.8rem; color: var(--slate-500);">до 30 объектов, 10 пользователей, AI</div></div>
+                <div style="text-align: right;"><div style="font-size: 1.3rem; font-weight: 700;">₽9 900</div><div style="font-size: 0.75rem; color: var(--slate-500);">/мес</div></div>
+              </div>
+            </div>
+            <div style="border: 1px solid var(--slate-200); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div><strong>Генподрядчик</strong><div style="font-size: 0.8rem; color: var(--slate-500);">∞ объектов, ∞ пользователей, BIM, API</div></div>
+                <div style="text-align: right;"><div style="font-size: 1.3rem; font-weight: 700;">₽29 900</div><div style="font-size: 0.75rem; color: var(--slate-500);">/мес</div></div>
+              </div>
+            </div>
+            <button class="phone-btn primary-a">Выбрать план</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay a">
+        <strong>📊 CJM Overlay — Paywall</strong>
+        <table>
+          <tr><td>Stage:</td><td>Conversion (день 14 — конец trial)</td></tr>
+          <tr><td>Timing:</td><td><strong>Paywall сразу после Aha</strong> — конверсия на wow-эмоциях от dashboard</td></tr>
+          <tr><td>Framing:</td><td>«Вы уже сэкономили ₽X» — ROI-based, не feature-based</td></tr>
+          <tr><td>Якорь:</td><td>₽29 900 (Генподрядчик) → ₽2 990 (Бригадир) кажется дёшево</td></tr>
+          <tr><td>Микротренды:</td><td>
+            <span class="micro-trend">💡 ROI-based pricing</span>
+            <span class="micro-trend">🆓 Freemium → 1 объект навсегда</span>
+          </td></tr>
+          <tr><td>Валидация:</td><td>Trial-to-paid > 12%? ARPU > ₽5 000?</td></tr>
+          <tr><td>Источник:</td><td><a href="https://www.odoo.com/pricing" target="_blank">Odoo Pricing: модульная модель</a>, <a href="https://www.heliconia.io/odoo-pricing" target="_blank">Heliconia: Odoo pricing breakdown</a></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 6: Invite (Referral) -->
+  <div class="screen">
+    <div class="screen-header">
+      <h2>🤝 6. Referral</h2>
+      <span class="badge badge-a">AARRR: Referral</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>18:00</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <h3>Пригласите субподрядчика</h3>
+            <p class="sub">Ваши субподрядчики получат бесплатный доступ к вашим объектам. Вы — контроль и прозрачность.</p>
+
+            <div style="background: var(--amber-50); padding: 1rem; border-radius: 12px; margin: 1rem 0;">
+              <strong>🎁 За каждого приглашённого:</strong>
+              <ul style="margin: 0.5rem 0 0 1rem; font-size: 0.85rem;">
+                <li>Субподрядчик → бесплатный «Бригадир» на 3 мес</li>
+                <li>Вам → -10% от подписки (до -50%)</li>
+                <li>Заказчику → view-only портал отслеживания</li>
+              </ul>
+            </div>
+            <button class="phone-btn primary-a">📲 Отправить приглашение</button>
+            <button class="phone-btn secondary">🔗 Скопировать ссылку для заказчика</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay a">
+        <strong>📊 CJM Overlay — Referral</strong>
+        <table>
+          <tr><td>Stage:</td><td>Viral loop</td></tr>
+          <tr><td>Механика:</td><td><strong>Supply-side viral:</strong> приглашение субподрядчиков = бесплатные пользователи → они привыкают → становятся платящими для своих объектов</td></tr>
+          <tr><td>K-factor:</td><td>Каждая стройкомпания работает с 3-7 субподрядчиками → K ≈ 0.5-0.8</td></tr>
+          <tr><td>Микротренды:</td><td>
+            <span class="micro-trend">🔄 Экосистема, не конкуренция</span>
+            <span class="micro-trend">📊 Портал заказчика</span>
+          </td></tr>
+          <tr><td>Валидация:</td><td>Invites per company > 3? Invited-to-active > 40%?</td></tr>
+          <tr><td>Источник:</td><td><a href="https://blogs.forbes.ru/2025/12/30/rynok-remonta-i-stroitelstva-cifrovaja-zrelost-doverie-i-novaja-struktura-sprosa/" target="_blank">Forbes.ru: экосистема вместо конкуренции</a></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  VARIANT B: ЭКОСИСТЕМА ДОВЕРИЯ                             ║
+     ║  Aha: маркетплейс с рейтингом подрядчиков                  ║
+     ║  Entry: Emotional Job Segment 3 (не бояться обмана)        ║
+     ║  Paywall: после 7 дней (привычка + proof)                  ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="variant" id="variant-b">
+
+  <div class="screen">
+    <div class="screen-header">
+      <h2>📱 1. Landing (Awareness)</h2>
+      <span class="badge badge-b">AARRR: Acquisition</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <div style="text-align:center; padding: 1rem 0;">
+              <div style="font-size: 3rem;">🤝</div>
+              <h3>Ремонт без страха.<br>Подрядчик с рейтингом.</h3>
+              <p class="sub">Маркетплейс проверенных бригад + ERP для управления ремонтом. Портфолио, отзывы, гарантия сроков — всё прозрачно.</p>
+              <button class="phone-btn primary-b">Найти мастера с гарантией</button>
+              <button class="phone-btn secondary">Я подрядчик — хочу заказы</button>
+              <div style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--slate-500);">
+                <div>🛡️ 12 000+ проверенных бригад</div>
+                <div>⭐ Средний рейтинг 4.6 · 40 000+ завершённых проектов</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay b">
+        <strong>📊 CJM Overlay — Landing</strong>
+        <table>
+          <tr><td>Stage:</td><td>Awareness (двусторонний: заказчик + подрядчик)</td></tr>
+          <tr><td>Сегмент:</td><td>Частный заказчик, Emotional Job: «Не бояться обмана»</td></tr>
+          <tr><td>Вход:</td><td>SEO: «ремонт квартир отзывы», «найти бригаду с гарантией»; Авито-альтернатива</td></tr>
+          <tr><td>Микротренды:</td><td>
+            <span class="micro-trend">📊 Прозрачность = валюта</span>
+            <span class="micro-trend">🔄 Экосистема доверия</span>
+            <span class="micro-trend">⚡ Скорость отклика &lt;30 мин</span>
+          </td></tr>
+          <tr><td>Источник:</td><td><a href="https://blogs.forbes.ru/2025/12/30/rynok-remonta-i-stroitelstva-cifrovaja-zrelost-doverie-i-novaja-struktura-sprosa/" target="_blank">Forbes.ru: 40% жалуются на срывы и обман</a></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-header">
+      <h2>📝 2. Onboarding (Activation)</h2>
+      <span class="badge badge-b">AARRR: Activation</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:42</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <h3>Опишите ваш проект</h3>
+            <div class="quiz-q">
+              <div class="q-label">Что нужно сделать?</div>
+              <div class="quiz-opts">
+                <span class="quiz-opt">🏠 Ремонт квартиры</span>
+                <span class="quiz-opt">🏡 Строительство дома</span>
+                <span class="quiz-opt">🔧 Частичный ремонт</span>
+              </div>
+            </div>
+            <div class="quiz-q">
+              <div class="q-label">Площадь и бюджет</div>
+              <div class="quiz-opts">
+                <span class="quiz-opt">до 50 м²</span>
+                <span class="quiz-opt">50-100 м²</span>
+                <span class="quiz-opt">100+ м²</span>
+              </div>
+            </div>
+            <div class="quiz-q">
+              <div class="q-label">Когда нужно начать?</div>
+              <div class="quiz-opts">
+                <span class="quiz-opt">Срочно</span>
+                <span class="quiz-opt">В этом месяце</span>
+                <span class="quiz-opt">Планирую</span>
+              </div>
+            </div>
+            <button class="phone-btn primary-b" style="margin-top: 0.75rem;">Получить 3 предложения за 30 минут</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay b">
+        <strong>📊 CJM Overlay — Onboarding</strong>
+        <table>
+          <tr><td>Механика:</td><td>Заказчик описывает проект → AI подбирает 3 бригады → отклик &lt;30 мин</td></tr>
+          <tr><td>Микротренды:</td><td>
+            <span class="micro-trend">🤖 AI-матчинг</span>
+            <span class="micro-trend">⚡ Instant quotes</span>
+          </td></tr>
+          <tr><td>Источник:</td><td><a href="https://www.sostav.ru/blogs/281804/71928" target="_blank">Sostav: тренды ремонта 2025-2026</a></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-header">
+      <h2>⚡ 3. Aha Moment</h2>
+      <span class="badge badge-b">AARRR: Activation → Retention</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>10:15</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <h3>3 подрядчика готовы!</h3>
+            <p class="sub">Сравните рейтинг, портфолио и цены</p>
+
+            <div style="border: 1px solid var(--slate-200); border-radius: 12px; padding: 0.75rem; margin-bottom: 0.5rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div><strong>Бригада Петрова</strong> ⭐ 4.8<div style="font-size: 0.75rem; color: var(--slate-500);">127 проектов · Отделка</div></div>
+                <div style="text-align: right; font-weight: 700;">₽8 500/м²</div>
+              </div>
+              <div style="font-size: 0.75rem; color: var(--emerald-600); margin-top: 0.3rem;">🛡️ Гарантия 2 года · Сроки: 45 дней</div>
+            </div>
+            <div style="border: 1px solid var(--slate-200); border-radius: 12px; padding: 0.75rem; margin-bottom: 0.5rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div><strong>РемМастер</strong> ⭐ 4.6<div style="font-size: 0.75rem; color: var(--slate-500);">89 проектов · Полный цикл</div></div>
+                <div style="text-align: right; font-weight: 700;">₽12 000/м²</div>
+              </div>
+              <div style="font-size: 0.75rem; color: var(--emerald-600); margin-top: 0.3rem;">🛡️ Гарантия 3 года · Сроки: 60 дней</div>
+            </div>
+            <div style="border: 1px solid var(--blue-400); border-radius: 12px; padding: 0.75rem; margin-bottom: 0.75rem; background: var(--blue-50);">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div><strong>СтройПро</strong> ⭐ 4.9 <span style="font-size: 0.7rem; background: var(--blue-500); color: white; padding: 0.1rem 0.4rem; border-radius: 4px;">ТОП</span><div style="font-size: 0.75rem; color: var(--slate-500);">203 проекта · Капремонт</div></div>
+                <div style="text-align: right; font-weight: 700;">₽10 200/м²</div>
+              </div>
+              <div style="font-size: 0.75rem; color: var(--emerald-600); margin-top: 0.3rem;">🛡️ Гарантия 5 лет · Сроки: 50 дней · Страховка</div>
+            </div>
+            <button class="phone-btn primary-b">Выбрать и начать проект</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay b">
+        <strong>📊 CJM Overlay — Aha Moment</strong>
+        <table>
+          <tr><td>Aha суть:</td><td><strong>«3 проверенных бригады с портфолио откликнулись за 30 минут — не как на Авито!»</strong></td></tr>
+          <tr><td>Эмоция:</td><td>Доверие + выбор. «Я контролирую процесс, а не зависну от случайного мастера»</td></tr>
+          <tr><td>Микротренды:</td><td>
+            <span class="micro-trend">🛡️ Верифицированные отзывы</span>
+            <span class="micro-trend">🤖 AI-матчинг бригад</span>
+            <span class="micro-trend">📊 Портфолио = социальное доказательство</span>
+          </td></tr>
+          <tr><td>Источник:</td><td><a href="https://blogs.forbes.ru/2025/12/30/rynok-remonta-i-stroitelstva-cifrovaja-zrelost-doverie-i-novaja-struktura-sprosa/" target="_blank">Forbes.ru: портфолио и отзывы — главные критерии выбора</a></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-header">
+      <h2>🔄 4. Core Loop (Retention)</h2>
+      <span class="badge badge-b">AARRR: Retention</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>20:00</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <h3 style="font-size: 1rem;">🏠 Мой ремонт — День 15/50</h3>
+            <div style="background: var(--slate-100); border-radius: 12px; padding: 0.75rem; margin: 0.75rem 0;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                <span>Прогресс</span><span style="font-weight: 700;">30%</span>
+              </div>
+              <div style="background: var(--slate-300); border-radius: 6px; height: 8px; margin-top: 0.5rem;">
+                <div style="background: var(--blue-500); border-radius: 6px; height: 8px; width: 30%;"></div>
+              </div>
+            </div>
+            <div style="font-size: 0.85rem; margin-bottom: 0.75rem;">
+              <div style="padding: 0.4rem 0; border-bottom: 1px solid var(--slate-100);">📸 Новые фото (12) — электрика завершена</div>
+              <div style="padding: 0.4rem 0; border-bottom: 1px solid var(--slate-100);">💰 Потрачено: ₽320K из ₽850K</div>
+              <div style="padding: 0.4rem 0; border-bottom: 1px solid var(--slate-100);">⏰ Следующий этап: стяжка пола (2 дня)</div>
+              <div style="padding: 0.4rem 0;">⭐ Оцените этап электрики</div>
+            </div>
+            <button class="phone-btn primary-b">Открыть камеру объекта 📹</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay b">
+        <strong>📊 CJM Overlay — Core Loop</strong>
+        <table>
+          <tr><td>Hook:</td><td><strong>Ежедневные фотоотчёты + push «Ваш ремонт: день 15»</strong></td></tr>
+          <tr><td>Частота:</td><td>Заказчик заходит 1-2 раза/день проверить прогресс</td></tr>
+          <tr><td>Микротренды:</td><td>
+            <span class="micro-trend">📸 Фотофиксация этапов</span>
+            <span class="micro-trend">📹 Камера на объекте</span>
+            <span class="micro-trend">⭐ Этапная оценка качества</span>
+          </td></tr>
+          <tr><td>Источник:</td><td><a href="https://vc.ru/id4078595/1595760-integraciya-crm-sistemy-v-kompaniyu-po-remontu-kvartir" target="_blank">vc.ru: интеграция CRM в ремонтную компанию</a></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-header">
+      <h2>💳 5. Paywall (Revenue)</h2>
+      <span class="badge badge-b">AARRR: Revenue</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <h3>Двусторонняя монетизация</h3>
+            <div style="background: var(--blue-50); padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+              <strong>Для заказчика:</strong> Бесплатно навсегда
+              <div style="font-size: 0.8rem; color: var(--slate-500); margin-top: 0.25rem;">Поиск, сравнение, портал отслеживания, отзывы</div>
+            </div>
+            <div style="border: 2px solid var(--blue-400); border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div><strong>Подрядчик: Стандарт</strong><div style="font-size: 0.8rem; color: var(--slate-500);">CRM + сметы + портфолио + до 5 заказов/мес</div></div>
+                <div style="text-align: right;"><div style="font-size: 1.3rem; font-weight: 700;">₽3 990</div><div style="font-size: 0.75rem; color: var(--slate-500);">/мес</div></div>
+              </div>
+            </div>
+            <div style="border: 1px solid var(--slate-200); border-radius: 12px; padding: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div><strong>Подрядчик: Про</strong><div style="font-size: 0.8rem; color: var(--slate-500);">∞ заказов + ERP + бригады + приоритет + AI</div></div>
+                <div style="text-align: right;"><div style="font-size: 1.3rem; font-weight: 700;">₽9 900</div><div style="font-size: 0.75rem; color: var(--slate-500);">/мес</div></div>
+              </div>
+            </div>
+            <div style="text-align: center; margin-top: 1rem; font-size: 0.8rem; color: var(--slate-500);">+ комиссия 3-5% с каждой сделки через платформу</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay b">
+        <strong>📊 CJM Overlay — Paywall</strong>
+        <table>
+          <tr><td>Timing:</td><td><strong>Paywall после 7 дней</strong> — подрядчик привык, получил первые заказы</td></tr>
+          <tr><td>Модель:</td><td>Marketplace: заказчик бесплатно, подрядчик платит подписку + комиссию</td></tr>
+          <tr><td>Источник:</td><td><a href="https://marketing.rbc.ru/articles/14851/" target="_blank">РБК: рынок ремонта ₽500 млрд к 2027</a></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-header">
+      <h2>🤝 6. Referral</h2>
+      <span class="badge badge-b">AARRR: Referral</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>18:00</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <h3>Посоветуйте друзьям</h3>
+            <div style="background: var(--blue-50); padding: 1rem; border-radius: 12px; margin: 1rem 0; font-size: 0.85rem;">
+              <strong>Заказчик → Заказчик:</strong> «Я нашёл бригаду через СтройУправ — вот ссылка, тебе скидка 5% на первый заказ»
+              <br><br>
+              <strong>Подрядчик → Подрядчик:</strong> «Я получаю отсюда 8 заказов/мес — по моей ссылке тебе месяц бесплатно»
+            </div>
+            <button class="phone-btn primary-b">Поделиться ссылкой</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay b">
+        <strong>📊 CJM Overlay — Referral</strong>
+        <table>
+          <tr><td>Механика:</td><td><strong>Двусторонний viral:</strong> заказчики приводят заказчиков (WOM после успешного ремонта), подрядчики приводят подрядчиков (guild effect)</td></tr>
+          <tr><td>Источник:</td><td><a href="https://blogs.forbes.ru/2025/12/30/rynok-remonta-i-stroitelstva-cifrovaja-zrelost-doverie-i-novaja-struktura-sprosa/" target="_blank">Forbes.ru: доверие — новая валюта рынка ремонта</a></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  VARIANT C: AI-СМЕТЧИК                                     ║
+     ║  Aha: мгновенная смета по фото/чертежу                     ║
+     ║  Entry: Functional Job Segment 2 (контроль бюджета)        ║
+     ║  Paywall: после первого сэкономленного объекта (proof)     ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="variant" id="variant-c">
+
+  <div class="screen">
+    <div class="screen-header">
+      <h2>📱 1. Landing (Awareness)</h2>
+      <span class="badge badge-c">AARRR: Acquisition</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <div style="text-align:center; padding: 1rem 0;">
+              <div style="font-size: 3rem;">🤖</div>
+              <h3>Смета за 5 минут.<br>Не за 5 дней.</h3>
+              <p class="sub">AI-сметчик рассчитает стоимость по ГЭСН/ФЕР, а ERP проконтролирует каждый рубль. Загрузите чертёж или опишите объект.</p>
+              <button class="phone-btn primary-c">📄 Загрузить чертёж → Получить смету</button>
+              <button class="phone-btn secondary">✏️ Описать объект текстом</button>
+              <div style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--slate-500);">
+                <div>🤖 AI обучен на 1.2 млн реальных смет · Точность 94%</div>
+                <div style="margin-top: 0.25rem;">📋 ГЭСН · ФЕР · ТЕР · Индексы Минстроя</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay c">
+        <strong>📊 CJM Overlay — Landing</strong>
+        <table>
+          <tr><td>Сегмент:</td><td>Генподрядчик, Functional Job: «Контролировать бюджет на 3-10 объектах»</td></tr>
+          <tr><td>Вход:</td><td>SEO: «программа для смет», «расчёт ГЭСН онлайн», «сметное ПО»</td></tr>
+          <tr><td>Микротренды:</td><td>
+            <span class="micro-trend">🤖 AI-сметы (ML quantity extraction)</span>
+            <span class="micro-trend">📋 Обязательный BIM 2024+</span>
+            <span class="micro-trend">🏗️ Импортозамещение ПО</span>
+          </td></tr>
+          <tr><td>Источник:</td><td>
+            <a href="https://www.autodesk.com/blogs/construction/top-2025-ai-construction-trends-according-to-the-experts/" target="_blank">Autodesk: ML-based quantity extraction</a>,
+            <a href="https://academy.tsus.ru/gde-vesti-smety-na-stroitelno-montazhnye-raboty-v-elektronnom-vide/" target="_blank">TSUS: сметное дело в электронном виде</a>
+          </td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-header">
+      <h2>📝 2. Onboarding (Activation)</h2>
+      <span class="badge badge-c">AARRR: Activation</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:42</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <h3>AI анализирует ваш чертёж...</h3>
+            <div style="text-align: center; padding: 2rem 0;">
+              <div style="font-size: 3rem; margin-bottom: 1rem;">📐</div>
+              <div style="background: var(--slate-100); border-radius: 8px; height: 8px; margin: 1rem 2rem;">
+                <div style="background: var(--emerald-500); border-radius: 8px; height: 8px; width: 65%; transition: width 2s;"></div>
+              </div>
+              <div style="font-size: 0.85rem; color: var(--slate-500);">
+                ✅ Распознано: 3 комнаты, кухня, с/у<br>
+                ✅ Площадь: 78 м²<br>
+                🔄 Определяю виды работ...<br>
+                🔄 Подбираю расценки ГЭСН...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay c">
+        <strong>📊 CJM Overlay — Onboarding</strong>
+        <table>
+          <tr><td>Механика:</td><td>Zero-input onboarding — загрузил чертёж → AI делает всё</td></tr>
+          <tr><td>Микротренды:</td><td>
+            <span class="micro-trend">🤖 Computer Vision на чертежах</span>
+            <span class="micro-trend">📄 PDF/DWG/IFC parsing</span>
+          </td></tr>
+          <tr><td>Источник:</td><td><a href="https://www.autodesk.com/blogs/construction/2026-ai-trends-25-experts-share-insights/" target="_blank">Autodesk: автоматический takeoff из PDF/DWG/IFC</a></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-header">
+      <h2>⚡ 3. Aha Moment</h2>
+      <span class="badge badge-c">AARRR: Activation → Retention</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:47</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <h3>Смета готова! 🎉</h3>
+            <div class="kpi-card" style="background: linear-gradient(135deg, var(--emerald-700), var(--emerald-800));">
+              <div class="value">₽3 247 000</div>
+              <div class="label">Итого по 142 позициям ГЭСН/ФЕР</div>
+            </div>
+            <div style="font-size: 0.85rem;">
+              <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--slate-100); display: flex; justify-content: space-between;">
+                <span>🏗️ Общестроительные</span><span>₽1 240K</span>
+              </div>
+              <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--slate-100); display: flex; justify-content: space-between;">
+                <span>⚡ Электромонтаж</span><span>₽380K</span>
+              </div>
+              <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--slate-100); display: flex; justify-content: space-between;">
+                <span>🚰 Сантехника</span><span>₽290K</span>
+              </div>
+              <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--slate-100); display: flex; justify-content: space-between;">
+                <span>🎨 Отделка</span><span>₽890K</span>
+              </div>
+              <div style="padding: 0.5rem 0; display: flex; justify-content: space-between;">
+                <span>📦 Материалы</span><span>₽447K</span>
+              </div>
+            </div>
+            <button class="phone-btn primary-c" style="margin-top: 1rem;">Скачать PDF · Экспорт в Excel · КС-2</button>
+            <div style="background: var(--emerald-50); padding: 0.75rem; border-radius: 10px; font-size: 0.8rem; margin-top: 0.5rem;">
+              🤖 <strong>AI-совет:</strong> Электромонтаж на 12% дороже среднерыночного. Рекомендую проверить позиции 47-52 — возможна оптимизация.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay c">
+        <strong>📊 CJM Overlay — Aha Moment</strong>
+        <table>
+          <tr><td>Aha суть:</td><td><strong>«Смета на 142 позиции за 5 минут вместо 5 дней — и AI подсказывает где переплата!»</strong></td></tr>
+          <tr><td>Эмоция:</td><td>Восторг + экономия. «Я только что сэкономил 3 дня работы сметчика»</td></tr>
+          <tr><td>Микротренды:</td><td>
+            <span class="micro-trend">🤖 AI-оптимизация смет</span>
+            <span class="micro-trend">📋 Auto-КС-2/КС-3</span>
+            <span class="micro-trend">📊 Бенчмарки по рынку</span>
+          </td></tr>
+          <tr><td>Источник:</td><td>
+            <a href="https://smetter.ru/" target="_blank">Сметтер: автоматизация сметного дела</a>,
+            <a href="https://strategy.ru/research/research/obem-rynka-cifrovizacii-stroitelnoj-otrasli-mozhet-vyrasti-v-chetyre-raza-k-2028-godu/" target="_blank">Strategy Partners: рынок ×4 к 2028</a>
+          </td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-header">
+      <h2>🔄 4. Core Loop (Retention)</h2>
+      <span class="badge badge-c">AARRR: Retention</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>14:30</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <h3 style="font-size: 1rem;">💰 Бюджетный контроль — 3 объекта</h3>
+            <div style="font-size: 0.85rem;">
+              <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--slate-100);">
+                <div style="display: flex; justify-content: space-between;"><span>🏠 Квартира Мира</span><span style="color: var(--emerald-500);">₽-47K от сметы ✅</span></div>
+              </div>
+              <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--slate-100);">
+                <div style="display: flex; justify-content: space-between;"><span>🏢 Офис Центр</span><span style="color: var(--red-500);">₽+180K от сметы ⚠️</span></div>
+                <div style="font-size: 0.75rem; color: var(--red-500);">🤖 AI: перерасход на бетонных работах — проверьте объёмы</div>
+              </div>
+              <div style="padding: 0.5rem 0;">
+                <div style="display: flex; justify-content: space-between;"><span>🏡 Коттедж</span><span style="color: var(--amber-500);">В рамках ±2%</span></div>
+              </div>
+            </div>
+            <button class="phone-btn primary-c" style="margin-top: 1rem;">Пересчитать смету с новыми индексами Минстроя</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay c">
+        <strong>📊 CJM Overlay — Core Loop</strong>
+        <table>
+          <tr><td>Hook:</td><td><strong>AI-алерты при отклонении факта от сметы + квартальное обновление индексов</strong></td></tr>
+          <tr><td>Микротренды:</td><td>
+            <span class="micro-trend">🤖 Predictive cost forecasting</span>
+            <span class="micro-trend">📊 Факт vs план в реальном времени</span>
+            <span class="micro-trend">📋 Индексы Минстроя auto-update</span>
+          </td></tr>
+          <tr><td>Источник:</td><td><a href="https://fin-ctrl.ru/blog/case-stroy-development" target="_blank">FinCtrl: управленческий учёт стройки</a></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-header">
+      <h2>💳 5. Paywall (Revenue)</h2>
+      <span class="badge badge-c">AARRR: Revenue</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <h3>AI сэкономил вам ₽420 000</h3>
+            <p class="sub">на первых 3 сметах. Продолжайте?</p>
+            <div style="border: 2px solid var(--emerald-400); border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div><strong>Сметчик</strong><div style="font-size: 0.8rem; color: var(--slate-500);">AI-сметы + ГЭСН/ФЕР + экспорт</div></div>
+                <div style="text-align: right;"><div style="font-size: 1.3rem; font-weight: 700;">₽4 900</div><div style="font-size: 0.75rem; color: var(--slate-500);">/мес</div></div>
+              </div>
+            </div>
+            <div style="border: 1px solid var(--slate-200); border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div><strong>Сметчик + ERP</strong><div style="font-size: 0.8rem; color: var(--slate-500);">+ бюджет, бригады, Gantt, КС-2</div></div>
+                <div style="text-align: right;"><div style="font-size: 1.3rem; font-weight: 700;">₽14 900</div><div style="font-size: 0.75rem; color: var(--slate-500);">/мес</div></div>
+              </div>
+            </div>
+            <div style="border: 1px solid var(--slate-200); border-radius: 12px; padding: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div><strong>Enterprise</strong><div style="font-size: 0.8rem; color: var(--slate-500);">+ BIM + API + 1С интеграция + on-premise</div></div>
+                <div style="text-align: right;"><div style="font-size: 1.3rem; font-weight: 700;">₽49 900</div><div style="font-size: 0.75rem; color: var(--slate-500);">/мес</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay c">
+        <strong>📊 CJM Overlay — Paywall</strong>
+        <table>
+          <tr><td>Timing:</td><td><strong>Paywall после proof of value</strong> — AI показал экономию на реальных сметах</td></tr>
+          <tr><td>Framing:</td><td>«AI сэкономил ₽X» → подписка = 1% от экономии</td></tr>
+          <tr><td>Источник:</td><td><a href="https://www.odoo.com/pricing" target="_blank">Odoo: модульный pricing</a></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-header">
+      <h2>🤝 6. Referral</h2>
+      <span class="badge badge-c">AARRR: Referral</span>
+    </div>
+    <div class="screen-body">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>18:00</span><span>📶 🔋</span></div>
+          <div class="phone-content">
+            <h3>Поделитесь сметой</h3>
+            <div style="background: var(--emerald-50); padding: 1rem; border-radius: 12px; margin: 1rem 0; font-size: 0.85rem;">
+              <strong>Каждая смета — визитная карточка:</strong>
+              <ul style="margin: 0.5rem 0 0 1rem;">
+                <li>Отправьте смету заказчику → он видит «Создано в СтройУправ»</li>
+                <li>Заказчик кликает → получает доступ к порталу отслеживания</li>
+                <li>Следующий объект → заказчик требует «как в прошлый раз, через СтройУправ»</li>
+              </ul>
+            </div>
+            <button class="phone-btn primary-c">📤 Отправить смету заказчику</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cjm-overlay c">
+        <strong>📊 CJM Overlay — Referral</strong>
+        <table>
+          <tr><td>Механика:</td><td><strong>Product-led viral:</strong> каждая отправленная смета — реклама продукта. Заказчик привыкает к порталу → требует его от следующего подрядчика</td></tr>
+          <tr><td>Источник:</td><td><a href="https://blogs.forbes.ru/2025/12/30/rynok-remonta-i-stroitelstva-cifrovaja-zrelost-doverie-i-novaja-struktura-sprosa/" target="_blank">Forbes.ru: прозрачность — новый стандарт</a></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  COMPARE TABLE                                             ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="variant" id="variant-compare">
+
+  <div class="compare-table">
+    <h2>⚖️ Сравнение 3 вариантов CJM</h2>
+    <table>
+      <tr>
+        <th style="width: 160px;">Параметр</th>
+        <th style="background: var(--amber-700);">🔶 A: Прораб-автопилот</th>
+        <th style="background: var(--blue-700);">🔷 B: Экосистема доверия</th>
+        <th style="background: var(--emerald-700);">🟢 C: AI-сметчик</th>
+      </tr>
+      <tr>
+        <td class="dim-label">Целевой сегмент</td>
+        <td>Ремонтная компания (5-50 чел.)</td>
+        <td>Частный заказчик + мастер</td>
+        <td>Генподрядчик (50-500 чел.)</td>
+      </tr>
+      <tr>
+        <td class="dim-label">Aha Moment</td>
+        <td>Dashboard всех объектов + AI-прогноз</td>
+        <td>3 проверенных бригады за 30 минут</td>
+        <td>Смета на 142 позиции за 5 минут</td>
+      </tr>
+      <tr>
+        <td class="dim-label">Entry Hook</td>
+        <td>«10 объектов — один экран»</td>
+        <td>«Ремонт без страха»</td>
+        <td>«Смета за 5 минут, не 5 дней»</td>
+      </tr>
+      <tr>
+        <td class="dim-label">Core Loop</td>
+        <td>Ежедневный дайджест + фотоотчёты + AI-алерты</td>
+        <td>Прогресс ремонта + фото от бригады + оценка этапов</td>
+        <td>Факт vs план + AI-оптимизация + индексы Минстроя</td>
+      </tr>
+      <tr>
+        <td class="dim-label">Paywall Timing</td>
+        <td>Сразу после Aha (день 14)</td>
+        <td>После 7 дней (привычка)</td>
+        <td>После proof of value (AI-экономия)</td>
+      </tr>
+      <tr>
+        <td class="dim-label">Pricing</td>
+        <td>₽2 990 — ₽29 900/мес</td>
+        <td>₽3 990 — ₽9 900/мес + комиссия 3-5%</td>
+        <td>₽4 900 — ₽49 900/мес</td>
+      </tr>
+      <tr>
+        <td class="dim-label">Viral Механика</td>
+        <td>Supply-side: приглашение субподрядчиков</td>
+        <td>Двусторонний: заказчик↔подрядчик WOM</td>
+        <td>Product-led: смета = визитка продукта</td>
+      </tr>
+      <tr>
+        <td class="dim-label">Конкурентное преимущество</td>
+        <td>Mobile-first + AI-прораб + Russian compliance</td>
+        <td>Trust graph + marketplace + портал заказчика</td>
+        <td>AI-сметы по ГЭСН/ФЕР + predictive budgeting</td>
+      </tr>
+      <tr>
+        <td class="dim-label">Риск</td>
+        <td>Долгий onboarding для компании; конкуренция с 1С:УСО</td>
+        <td>Chicken-and-egg marketplace; конкуренция с Авито/YouDo</td>
+        <td>AI-точность < 90% = потеря доверия; нужна база ГЭСН</td>
+      </tr>
+      <tr>
+        <td class="dim-label">TAM (РФ)</td>
+        <td>~200K компаний × ₽9 900 = ₽24 млрд/год</td>
+        <td>~15 млн ремонтов × ₽5K комиссия = ₽75 млрд/год</td>
+        <td>~35K компаний × ₽14 900 = ₽6.3 млрд/год</td>
+      </tr>
+      <tr>
+        <td class="dim-label">Микротренды</td>
+        <td>
+          <span class="micro-trend">📱 Mobile-first</span>
+          <span class="micro-trend">🤖 AI-агент</span>
+          <span class="micro-trend">📸 Фотофиксация</span>
+        </td>
+        <td>
+          <span class="micro-trend">📊 Прозрачность</span>
+          <span class="micro-trend">🔄 Экосистема</span>
+          <span class="micro-trend">⚡ Instant response</span>
+        </td>
+        <td>
+          <span class="micro-trend">🤖 ML estimating</span>
+          <span class="micro-trend">📋 BIM обязателен</span>
+          <span class="micro-trend">🏗️ Digital twin</span>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- SCORING -->
+  <div class="scoring">
+    <h2>🏆 Scoring (Оценка вариантов)</h2>
+    <div class="score-cards">
+      <div class="score-card winner">
+        <h3>🔶 A: Прораб-автопилот</h3>
+        <div class="score-item"><span>TAM</span><span>8/10</span></div>
+        <div class="score-item"><span>Time-to-Revenue</span><span>7/10</span></div>
+        <div class="score-item"><span>Viral potential</span><span>7/10</span></div>
+        <div class="score-item"><span>Defensibility</span><span>8/10</span></div>
+        <div class="score-item"><span>Execution risk</span><span>7/10</span></div>
+        <div class="score-total" style="color: var(--amber-600);">37/50</div>
+      </div>
+      <div class="score-card">
+        <h3>🔷 B: Экосистема доверия</h3>
+        <div class="score-item"><span>TAM</span><span>10/10</span></div>
+        <div class="score-item"><span>Time-to-Revenue</span><span>5/10</span></div>
+        <div class="score-item"><span>Viral potential</span><span>9/10</span></div>
+        <div class="score-item"><span>Defensibility</span><span>6/10</span></div>
+        <div class="score-item"><span>Execution risk</span><span>4/10</span></div>
+        <div class="score-total" style="color: var(--blue-600);">34/50</div>
+      </div>
+      <div class="score-card">
+        <h3>🟢 C: AI-сметчик</h3>
+        <div class="score-item"><span>TAM</span><span>6/10</span></div>
+        <div class="score-item"><span>Time-to-Revenue</span><span>8/10</span></div>
+        <div class="score-item"><span>Viral potential</span><span>6/10</span></div>
+        <div class="score-item"><span>Defensibility</span><span>9/10</span></div>
+        <div class="score-item"><span>Execution risk</span><span>5/10</span></div>
+        <div class="score-total" style="color: var(--emerald-600);">34/50</div>
+      </div>
+    </div>
+    <div style="text-align: center; margin-top: 1.5rem; color: var(--slate-500); font-size: 0.85rem;">
+      ⭐ Рекомендация: <strong>Вариант A (Прораб-автопилот)</strong> как MVP с элементами C (AI-сметы) — сбалансированный TAM, умеренный risk, высокая defensibility через отраслевую специализацию
+    </div>
+  </div>
+
+  <!-- SOURCES -->
+  <div class="sources">
+    <h2>🔗 Источники (кликабельные)</h2>
+    <ul>
+      <li>📊 <a href="https://strategy.ru/research/research/obem-rynka-cifrovizacii-stroitelnoj-otrasli-mozhet-vyrasti-v-chetyre-raza-k-2028-godu/" target="_blank">Strategy Partners — Рынок цифровизации строительства ×4 к 2028</a></li>
+      <li>📰 <a href="https://blogs.forbes.ru/2025/12/30/rynok-remonta-i-stroitelstva-cifrovaja-zrelost-doverie-i-novaja-struktura-sprosa/" target="_blank">Forbes.ru — Рынок ремонта: цифровая зрелость и доверие</a></li>
+      <li>📰 <a href="https://www.cnews.ru/projects/2025/tsifrovizatsiya_stroitelnoj_otrasli" target="_blank">CNews — Цифровизация строительной отрасли 2025</a></li>
+      <li>🏗️ <a href="https://cifrastroy.ru/news/chem-zapomnitsja-2024-god-i-chto-zhdet-stroitelnuju-otrasl-v-2025-m" target="_blank">Cifrastroy — Итоги 2024 и прогнозы 2025</a></li>
+      <li>🤖 <a href="https://www.autodesk.com/blogs/construction/2026-ai-trends-25-experts-share-insights/" target="_blank">Autodesk — AI Construction Trends 2026: 25+ экспертов</a></li>
+      <li>🤖 <a href="https://www.autodesk.com/blogs/construction/top-2025-ai-construction-trends-according-to-the-experts/" target="_blank">Autodesk — Top 2025 AI Construction Trends</a></li>
+      <li>🏗️ <a href="https://www.rib-software.com/en/blogs/construction-technology-trends" target="_blank">RIB Software — 10 Construction Technology Trends 2026</a></li>
+      <li>🏗️ <a href="https://buildern.com/resources/blog/construction-technology/" target="_blank">Buildern — 2026 Construction Technology Report</a></li>
+      <li>📰 <a href="https://techcrunch.com/2024/11/20/riding-high-on-open-source-erp-odoo-raises-527m-via-secondaries-lifting-its-valuation-to-5-26b/" target="_blank">TechCrunch — Odoo raises $527M, $5.26B valuation</a></li>
+      <li>💰 <a href="https://www.odoo.com/pricing" target="_blank">Odoo — Official Pricing</a></li>
+      <li>🏗️ <a href="https://www.odoo.com/industries/construction" target="_blank">Odoo — Construction Industry Page</a></li>
+      <li>⭐ <a href="https://www.capterra.com/p/135618/Odoo/reviews/" target="_blank">Capterra — Odoo Reviews 2026</a></li>
+      <li>⭐ <a href="https://www.trustpilot.com/review/odoo.com" target="_blank">Trustpilot — Odoo Reviews</a></li>
+      <li>📊 <a href="https://marketing.rbc.ru/articles/14851/" target="_blank">РБК — Рынок ремонта ₽500 млрд к 2027</a></li>
+      <li>🏢 <a href="https://solutions.1c.ru/catalog/uso2/features" target="_blank">1С — ERP Управление строительной организацией 2</a></li>
+      <li>📱 <a href="https://remont-crm.ru/" target="_blank">РемонтCRM — CRM для ремонтных компаний</a></li>
+      <li>📱 <a href="https://aspro.cloud/projects/construction/" target="_blank">Аспро.Cloud — CRM для строительных компаний</a></li>
+      <li>💼 <a href="https://vc.ru/id4078595/1595760-integraciya-crm-sistemy-v-kompaniyu-po-remontu-kvartir" target="_blank">vc.ru — Интеграция CRM в ремонтную компанию</a></li>
+      <li>📊 <a href="https://planfact.io/blog/posts/upravlencheskij-uchet-v-stroitelnoj-kompanii" target="_blank">Planfact — Управленческий учёт в строительстве</a></li>
+      <li>📋 <a href="https://101-app.com/blog/simplify-reports-in-construction" target="_blank">101-app — Упрощение отчётов в строительстве</a></li>
+      <li>🏗️ <a href="https://gloriumtech.com/case/odoo-18-enterprise-implementation-for-the-construction-project-management-company/" target="_blank">Gloriumtech — Odoo 18 для строительной компании</a></li>
+      <li>📰 <a href="https://www.sostav.ru/blogs/281804/71928" target="_blank">Sostav — Тренды ремонта квартир 2025-2026</a></li>
+      <li>📋 <a href="https://academy.tsus.ru/gde-vesti-smety-na-stroitelno-montazhnye-raboty-v-elektronnom-vide/" target="_blank">TSUS Academy — Сметы в электронном виде</a></li>
+      <li>📊 <a href="https://fin-ctrl.ru/blog/case-stroy-development" target="_blank">FinCtrl — Управленческая отчётность в строительстве</a></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+function showVariant(id) {
+  // Hide all variants
+  document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+  // Deactivate all tabs
+  document.querySelectorAll('.tab').forEach(t => {
+    t.className = 'tab';
+  });
+  // Show selected
+  document.getElementById('variant-' + id).classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active-' + id);
+}
+</script>
+
+</body>
+</html>
