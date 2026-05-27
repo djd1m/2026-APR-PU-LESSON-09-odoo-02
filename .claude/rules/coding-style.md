@@ -86,6 +86,17 @@ ai_service/
 - Use `JSONB` for flexible fields (estimate metadata)
 - Use `DECIMAL(15,2)` for money — never `FLOAT`
 
+## Money & Numeric Types
+
+### CRITICAL: Float vs Decimal
+- **Money fields:** ALWAYS use `Monetary` (Odoo) or `Decimal` (Python/FastAPI) — **NEVER Float**
+- **Odoo:** `fields.Monetary(currency_field='currency_id')` — uses Decimal internally
+- **FastAPI/Pydantic:** `Decimal` from `decimal` module — `amount: Decimal = Field(..., decimal_places=2)`
+- **PostgreSQL:** `DECIMAL(15,2)` or `NUMERIC(15,2)` — never `REAL` or `DOUBLE PRECISION`
+- **Calculations:** Convert via `Decimal(str(value))` — never `Decimal(float_value)` (loses precision)
+- **Quantity fields:** `fields.Float(digits=(16,4))` is acceptable for non-money quantities (площадь, количество)
+- **WHY:** Float(0.1 + 0.2) = 0.30000000000000004. В сметах на ₽3М это даёт ошибку в тысячи рублей.
+
 ## General
 
 ### Commits
