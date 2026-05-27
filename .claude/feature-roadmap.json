@@ -22,13 +22,15 @@
     "name": "Dashboard объектов",
     "description": "Список объектов с прогрессом, бюджетом, сроками. Цветовая индикация отклонений (GREEN/YELLOW/RED). Drill-down по каждому объекту. Сводная аналитика с виджетами.",
     "priority": "mvp",
-    "status": "planned",
+    "status": "done",
     "depends_on": [],
     "files_estimate": [
       "addons/stroyuprav_project/",
       "addons/stroyuprav_project/views/",
       "addons/stroyuprav_project/models/"
-    ]
+    ],
+    "branch": "feature/002-project-dashboard",
+    "review": "done"
   },
   {
     "id": "task-management",
@@ -36,7 +38,7 @@
     "name": "Управление задачами",
     "description": "Создание задач, назначение на бригаду, сроки, приоритеты. State machine: новая -> в работе -> на проверке -> выполнена. Подзадачи, зависимости finish-to-start, массовые операции, комментарии с @-mention.",
     "priority": "mvp",
-    "status": "planned",
+    "status": "done",
     "depends_on": [
       "project-dashboard"
     ],
@@ -44,7 +46,9 @@
       "addons/stroyuprav_task/",
       "addons/stroyuprav_task/models/",
       "addons/stroyuprav_task/views/"
-    ]
+    ],
+    "branch": "feature/003-task-management",
+    "review": "done"
   },
   {
     "id": "photo-reports",
@@ -52,7 +56,7 @@
     "name": "Фотофиксация",
     "description": "Фото с автоматическим геотегом и timestamp, привязка к задаче/этапу. Авто-обновление прогресса при загрузке. Offline-режим с sync queue. Галерея объекта с фильтрами. Хранение в MinIO S3.",
     "priority": "mvp",
-    "status": "planned",
+    "status": "done",
     "depends_on": [
       "task-management"
     ],
@@ -60,7 +64,9 @@
       "addons/stroyuprav_photo/",
       "addons/stroyuprav_photo/models/",
       "addons/stroyuprav_photo/views/"
-    ]
+    ],
+    "branch": "feature/004-photo-reports",
+    "review": "done"
   },
   {
     "id": "budget-realtime",
@@ -68,7 +74,7 @@
     "name": "Бюджет real-time",
     "description": "Факт vs план по каждому объекту, этапу, категории. Регистрация расходов с чеками. AI-алерты при отклонении > 10%. Бюджетные отчёты с графиками, экспорт PDF/Excel. Materialized views + Redis cache.",
     "priority": "mvp",
-    "status": "planned",
+    "status": "done",
     "depends_on": [
       "project-dashboard",
       "ai-estimator"
@@ -77,7 +83,9 @@
       "addons/stroyuprav_project/models/budget.py",
       "addons/stroyuprav_project/views/budget_views.xml",
       "ai_service/analytics_engine/"
-    ]
+    ],
+    "branch": "feature/005-budget-realtime",
+    "review": "done"
   },
   {
     "id": "mobile-pwa",
@@ -85,7 +93,7 @@
     "name": "Mobile App (PWA)",
     "description": "Progressive Web App с Service Worker для кэширования. Offline-first: задачи (read/write), фото (write), данные объекта (read). Sync queue с conflict resolution (server wins). Mobile-optimized UI 320-428px. Web Push API.",
     "priority": "mvp",
-    "status": "planned",
+    "status": "done",
     "depends_on": [
       "task-management",
       "photo-reports"
@@ -94,7 +102,9 @@
       "addons/stroyuprav_project/static/src/",
       "addons/stroyuprav_task/static/src/",
       "addons/stroyuprav_photo/static/src/"
-    ]
+    ],
+    "branch": "feature/006-mobile-pwa",
+    "review": "done"
   },
   {
     "id": "onboarding-quiz",
@@ -102,7 +112,7 @@
     "name": "Onboarding quiz",
     "description": "Quiz из 4 вопросов: роль, размер команды, тип работ, текущие инструменты. Персонализация dashboard layout, предзаполнение шаблонов задач, рекомендация тарифного плана. Возможность пропуска.",
     "priority": "mvp",
-    "status": "planned",
+    "status": "done",
     "depends_on": [
       "auth-billing"
     ],
@@ -110,7 +120,9 @@
       "addons/stroyuprav_onboarding/",
       "addons/stroyuprav_onboarding/models/",
       "addons/stroyuprav_onboarding/views/"
-    ]
+    ],
+    "branch": "feature/007-onboarding-quiz",
+    "review": "done"
   },
   {
     "id": "auth-billing",
