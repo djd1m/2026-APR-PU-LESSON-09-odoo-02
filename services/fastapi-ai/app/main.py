@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers import estimate, health
 from app.services.ai_client import AIClient
+from app.services.gesn_search import GesnSearchService
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +42,26 @@ async def lifespan(app: FastAPI):
     )
     logger.info("Redis connection pool created")
 
+    # Elasticsearch for ГЭСН/ФЕР lookup
+    try:
+        app.state.gesn_service = GesnSearchService(settings)
+        logger.info(
+            "ГЭСН search service initialised (ES=%s)",
+            settings.ELASTICSEARCH_URL,
+        )
+    except Exception as exc:
+        logger.warning(
+            "Elasticsearch unavailable — ГЭСН validation disabled: %s", exc
+        )
+        app.state.gesn_service = None
+
     yield
 
     # --- shutdown ---
+    if getattr(app.state, "gesn_service", None):
+        await app.state.gesn_service.close()
+        logger.info("Elasticsearch connection closed")
+
     await app.state.redis.aclose()
     logger.info("Redis connection closed")
 
