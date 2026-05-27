@@ -3,3 +3,7 @@ access_su_project_foreman,su.project.foreman,model_su_project,su_base.group_su_f
 access_su_project_manager,su.project.manager,model_su_project,su_base.group_su_manager,1,1,1,0
 access_su_project_admin,su.project.admin,model_su_project,su_base.group_su_admin,1,1,1,1
 access_su_project_client,su.project.client,model_su_project,su_base.group_su_client,1,0,0,0
+access_su_expense_foreman,su.expense.foreman,model_su_expense,su_base.group_su_foreman,1,0,0,0
+access_su_expense_manager,su.expense.manager,model_su_expense,su_base.group_su_manager,1,1,1,0
+access_su_expense_admin,su.expense.admin,model_su_expense,su_base.group_su_admin,1,1,1,1
+access_su_expense_client,su.expense.client,model_su_expense,su_base.group_su_client,1,0,0,0

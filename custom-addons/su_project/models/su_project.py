@@ -6,12 +6,14 @@ from odoo.exceptions import UserError
 
 class SuProject(models.Model):
     _name = 'su.project'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Строительный объект'
     _order = 'create_date desc'
 
     # ── Thresholds (class constants) ───────────────────────────
     BUDGET_YELLOW_THRESHOLD = 5.0   # % over budget → yellow
     BUDGET_RED_THRESHOLD = 15.0     # % over budget → red
+    BUDGET_ALERT_THRESHOLD = 10.0   # % over budget → AI alert
     DEADLINE_WARNING_DAYS = 7       # days until end_date → yellow
 
     # ── Core fields ────────────────────────────────────────────
@@ -49,6 +51,7 @@ class SuProject(models.Model):
     task_ids = fields.One2many('su.task', 'project_id', string='Задачи')
     estimate_ids = fields.One2many('su.estimate', 'project_id', string='Сметы')
     photo_ids = fields.One2many('su.photo', 'project_id', string='Фото')
+    expense_ids = fields.One2many('su.expense', 'project_id', string='Расходы')
 
     # ── Budget fields (Monetary — never Float for money) ───────
     budget_planned = fields.Monetary(string='Плановый бюджет')
@@ -80,6 +83,11 @@ class SuProject(models.Model):
         compute='_compute_task_count',
         store=True,
     )
+    expense_count = fields.Integer(
+        string='Кол-во расходов',
+        compute='_compute_expense_count',
+        store=True,
+    )
 
     # ── Health indicators ──────────────────────────────────────
     health_status = fields.Selection([
@@ -104,14 +112,13 @@ class SuProject(models.Model):
             else:
                 project.progress = 0.0
 
-    @api.depends('estimate_ids.total_amount', 'estimate_ids.state')
+    @api.depends('expense_ids.amount', 'expense_ids.state')
     def _compute_budget_actual(self):
         for project in self:
-            project.budget_actual = sum(
-                project.estimate_ids.filtered(
-                    lambda e: e.state == 'confirmed'
-                ).mapped('total_amount')
+            confirmed = project.expense_ids.filtered(
+                lambda e: e.state == 'confirmed'
             )
+            project.budget_actual = sum(confirmed.mapped('amount'))
 
     @api.depends('budget_actual', 'budget_planned')
     def _compute_budget_deviation(self):
@@ -163,6 +170,42 @@ class SuProject(models.Model):
             project.overdue = bool(
                 project.end_date and project.end_date < today
             )
+
+    @api.depends('expense_ids')
+    def _compute_expense_count(self):
+        for project in self:
+            project.expense_count = len(project.expense_ids)
+
+    def _check_budget_alert(self):
+        """Post chatter notification when budget deviation exceeds threshold."""
+        # Ensure stored computed fields are flushed before reading
+        self.flush_recordset(['budget_deviation_pct'])
+        for project in self:
+            if not project.budget_planned:
+                continue
+            pct = project.budget_deviation_pct
+            if pct > self.BUDGET_ALERT_THRESHOLD:
+                project.message_post(
+                    body=(
+                        'Внимание: бюджет объекта "%s" превышен на %.1f%% '
+                        '(порог: %.1f%%)'
+                    ) % (project.name, pct, self.BUDGET_ALERT_THRESHOLD),
+                    subject='Превышение бюджета',
+                    message_type='notification',
+                    subtype_xmlid='mail.mt_note',
+                )
+
+    def action_view_expenses(self):
+        """Open expense list for this project."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Расходы',
+            'res_model': 'su.expense',
+            'view_mode': 'tree,form,pivot,graph',
+            'domain': [('project_id', '=', self.id)],
+            'context': {'default_project_id': self.id},
+        }
 
     # ── State transition actions ───────────────────────────────
 

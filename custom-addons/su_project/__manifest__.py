@@ -9,10 +9,11 @@
         dashboard с цветовой индикацией.
     """,
     'author': 'СтройУправ',
-    'depends': ['su_base'],
+    'depends': ['su_base', 'mail'],
     'data': [
         'security/ir.model.access.csv',
         'views/su_project_views.xml',
+        'views/su_budget_views.xml',
         'views/su_project_dashboard.xml',
     ],
     'installable': True,
