@@ -72,7 +72,74 @@
 | **Frontend** | OWL (Odoo) + React (портал) | OWL для ERP-модулей, React для customer-facing |
 | **Mobile** | PWA → React Native | PWA для MVP, native для scale |
 | **Database** | PostgreSQL | Odoo-стандарт, проверенный на 13M+ users |
-| **AI/ML** | Python + LangChain + OpenAI/YandexGPT | AI-сметчик, NLP для чертежей |
+| **AI/ML** | Python + LangChain + dual-provider (см. ниже) | AI-сметчик, NLP для чертежей |
+
+### AI Provider Strategy: Dual-Provider (Cloud.ru + Western)
+
+**Основной провайдер (production):** [Cloud.ru Evolution Foundation Models](https://cloud.ru/products/evolution-foundation-models)
+
+| Возможность | Детали | Источник |
+|-------------|--------|----------|
+| **API** | OpenAI-совместимый API (drop-in замена) | [Cloud.ru Docs](https://cloud.ru/docs/foundation-models/ug/index) |
+| **Модели LLM** | 20+ моделей: DeepSeek, Qwen3-480B, Qwen3-Coder-480B, OpenAI gpt-oss-120B, GLM-4.6, T-pro-it-2.0 | [Cloud.ru Catalog](https://cloud.ru/products/evolution-ai-factory/catalog-foundation-models) |
+| **Embedding** | 2+ модели (bge-reranker-v2-m3, Qwen3-VL-Reranker-8B) | [Cloud.ru Docs](https://cloud.ru/docs/foundation-models/ug/topics/overview__available__models) |
+| **Function Calling** | Поддерживается в ряде моделей | [Cloud.ru Docs](https://cloud.ru/docs/foundation-models/ug/topics/overview__available__models) |
+| **RAG** | Evolution Managed RAG — готовый сервис | [Cloud.ru Products](https://cloud.ru/products/evolution-ai-factory) |
+| **Fine-tuning** | Evolution ML Finetuning — адаптация под сметные данные ГЭСН/ФЕР | [Cloud.ru Blog](https://cloud.ru/blog/stali-dostupny-instrumenty-cloud-ru-evolution-ai-factory) |
+| **AI Agents** | Evolution AI Agents — визуальный редактор агентов на LLM | [Cloud.ru Blog](https://cloud.ru/blog/stali-dostupny-instrumenty-cloud-ru-evolution-ai-factory) |
+| **Pricing** | От ₽35/1M input tokens, ₽70/1M output tokens (120B+ моделей) | [Cloud.ru Blog](https://cloud.ru/blog/cloud-ru-delayet-otkrytyye-llm-dostupnee) |
+| **Бесплатный доступ** | 16 моделей бесплатно до 31.10.2025 | [Cloud.ru Promo](https://cloud.ru/blog/besplatniy-dostup-k-open-source-llm-modelyam) |
+| **Rate Limit** | 15 RPS на API key (можно увеличить через ML Inference) | [Cloud.ru Docs](https://cloud.ru/docs/foundation-models/ug/topics/overview__available__models) |
+| **Суверенность** | Данные в РФ, без VPN, без иностранных карт | [Cloud.ru](https://cloud.ru/products/evolution-foundation-models) |
+
+**Fallback-провайдер:** OpenAI / Anthropic (для R&D, бенчмарков, edge-case моделей)
+
+#### Архитектура dual-provider (через LiteLLM gateway)
+
+```
+┌──────────────────────────────────────────────┐
+│  СтройУправ Backend                          │
+│                                              │
+│  ┌──────────────┐    ┌─────────────────────┐ │
+│  │  AI-сметчик  │───▶│  LiteLLM Gateway    │ │
+│  │  (LangChain) │    │  (OpenAI-compatible) │ │
+│  └──────────────┘    └───────┬─────────────┘ │
+│                              │               │
+│              ┌───────────────┼───────────┐   │
+│              ▼               ▼           │   │
+│  ┌───────────────┐  ┌──────────────┐     │   │
+│  │  Cloud.ru     │  │  OpenAI /    │     │   │
+│  │  Foundation   │  │  Anthropic   │     │   │
+│  │  Models       │  │  (fallback)  │     │   │
+│  │  PRIMARY ⭐   │  │  SECONDARY   │     │   │
+│  └───────────────┘  └──────────────┘     │   │
+│                                          │   │
+│  ┌───────────────┐  ┌──────────────┐     │   │
+│  │  Cloud.ru     │  │  Cloud.ru    │     │   │
+│  │  Managed RAG  │  │  Finetuning  │     │   │
+│  │  (ГЭСН/ФЕР)  │  │  (сметы)     │     │   │
+│  └───────────────┘  └──────────────┘     │   │
+└──────────────────────────────────────────────┘
+```
+
+#### Рекомендуемые модели для задач СтройУправ
+
+| Задача | Cloud.ru модель | Fallback | Обоснование |
+|--------|----------------|----------|-------------|
+| **AI-сметчик** (парсинг чертежей → расчёт) | Qwen3-Coder-480B + fine-tuned на ГЭСН | GPT-4o | Code + math reasoning для сметных расчётов |
+| **AI-прогноз задержек** | DeepSeek-V3 | Claude Sonnet | Аналитика временных рядов |
+| **AI-подсказки прорабу** | T-pro-it-2.0 (русскоязычная) | GPT-4o-mini | Нужен качественный русский, low-latency |
+| **Embedding (поиск по ГЭСН/ФЕР)** | bge-reranker-v2-m3 | text-embedding-3-small | Семантический поиск по нормативной базе |
+| **RAG (нормативные документы)** | Cloud.ru Managed RAG | Self-hosted RAG | ГЭСН, ФЕР, ТЕР, индексы Минстроя |
+| **OCR/Vision (чертежи)** | Qwen3-VL (vision) | GPT-4o (vision) | Распознавание планов, чертежей |
+
+#### Преимущества Cloud.ru для СтройУправ
+
+1. **Суверенность данных** — строительные сметы и проектная документация остаются в РФ (compliance)
+2. **Цена** — ₽35-70/1M tokens vs $2.50-10/1M tokens у OpenAI (в 10-50× дешевле)
+3. **Fine-tuning** — можно дообучить модель на реальных сметах ГЭСН/ФЕР без экспорта данных
+4. **Managed RAG** — готовый сервис для нормативной базы без своей инфраструктуры
+5. **OpenAI-совместимый API** — переключение между Cloud.ru и OpenAI через LiteLLM = 1 строка конфига
 | **Search** | Elasticsearch / Meilisearch | Поиск по базе ГЭСН/ФЕР |
 | **Storage** | S3-compatible (MinIO) | Фото, чертежи, документы |
 | **Queue** | Redis + Celery | Фоновые задачи (AI-генерация смет) |
