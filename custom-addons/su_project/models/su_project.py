@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+from datetime import timedelta
 from odoo import models, fields, api
+from odoo.exceptions import UserError
 
 
 class SuProject(models.Model):
@@ -7,6 +9,12 @@ class SuProject(models.Model):
     _description = 'Строительный объект'
     _order = 'create_date desc'
 
+    # ── Thresholds (class constants) ───────────────────────────
+    BUDGET_YELLOW_THRESHOLD = 5.0   # % over budget → yellow
+    BUDGET_RED_THRESHOLD = 15.0     # % over budget → red
+    DEADLINE_WARNING_DAYS = 7       # days until end_date → yellow
+
+    # ── Core fields ────────────────────────────────────────────
     name = fields.Char(string='Название', required=True)
     address = fields.Char(string='Адрес')
     project_type = fields.Selection([
@@ -21,17 +29,6 @@ class SuProject(models.Model):
         ('done', 'Завершён'),
     ], string='Статус', default='draft', tracking=True)
     area_sqm = fields.Float(string='Площадь м²')
-    budget_planned = fields.Monetary(string='Плановый бюджет')
-    budget_actual = fields.Monetary(
-        string='Фактический бюджет',
-        compute='_compute_budget_actual',
-        store=True,
-    )
-    progress = fields.Float(
-        string='Прогресс %',
-        compute='_compute_progress',
-        store=True,
-    )
     start_date = fields.Date(string='Дата начала')
     end_date = fields.Date(string='Дата окончания')
     manager_id = fields.Many2one('res.users', string='Ответственный')
@@ -47,9 +44,56 @@ class SuProject(models.Model):
         related='company_id.currency_id',
         store=True,
     )
+
+    # ── Relational fields ──────────────────────────────────────
     task_ids = fields.One2many('su.task', 'project_id', string='Задачи')
     estimate_ids = fields.One2many('su.estimate', 'project_id', string='Сметы')
     photo_ids = fields.One2many('su.photo', 'project_id', string='Фото')
+
+    # ── Budget fields (Monetary — never Float for money) ───────
+    budget_planned = fields.Monetary(string='Плановый бюджет')
+    budget_actual = fields.Monetary(
+        string='Фактический бюджет',
+        compute='_compute_budget_actual',
+        store=True,
+    )
+    budget_deviation = fields.Monetary(
+        string='Отклонение бюджета',
+        compute='_compute_budget_deviation',
+        store=True,
+    )
+    budget_deviation_pct = fields.Float(
+        string='Отклонение %',
+        compute='_compute_budget_deviation',
+        store=True,
+        digits=(5, 2),
+    )
+
+    # ── Progress & stats ───────────────────────────────────────
+    progress = fields.Float(
+        string='Прогресс %',
+        compute='_compute_progress',
+        store=True,
+    )
+    task_count = fields.Integer(
+        string='Кол-во задач',
+        compute='_compute_task_count',
+        store=True,
+    )
+
+    # ── Health indicators ──────────────────────────────────────
+    health_status = fields.Selection([
+        ('green', 'В норме'),
+        ('yellow', 'Внимание'),
+        ('red', 'Критично'),
+    ], string='Статус здоровья', compute='_compute_health_status', store=True)
+    overdue = fields.Boolean(
+        string='Просрочен',
+        compute='_compute_overdue',
+        store=True,
+    )
+
+    # ── Computed methods ───────────────────────────────────────
 
     @api.depends('task_ids.progress')
     def _compute_progress(self):
@@ -60,7 +104,7 @@ class SuProject(models.Model):
             else:
                 project.progress = 0.0
 
-    @api.depends('estimate_ids.total_amount')
+    @api.depends('estimate_ids.total_amount', 'estimate_ids.state')
     def _compute_budget_actual(self):
         for project in self:
             project.budget_actual = sum(
@@ -68,3 +112,95 @@ class SuProject(models.Model):
                     lambda e: e.state == 'confirmed'
                 ).mapped('total_amount')
             )
+
+    @api.depends('budget_actual', 'budget_planned')
+    def _compute_budget_deviation(self):
+        for project in self:
+            if project.budget_planned:
+                deviation = project.budget_actual - project.budget_planned
+                project.budget_deviation = deviation
+                project.budget_deviation_pct = (
+                    deviation / project.budget_planned
+                ) * 100.0
+            else:
+                project.budget_deviation = 0.0
+                project.budget_deviation_pct = 0.0
+
+    @api.depends('budget_deviation_pct', 'end_date')
+    def _compute_health_status(self):
+        today = fields.Date.today()
+        for project in self:
+            pct = project.budget_deviation_pct
+            is_overdue = (
+                project.end_date and project.end_date < today
+            )
+            is_near_deadline = (
+                project.end_date
+                and project.end_date < today + timedelta(
+                    days=self.DEADLINE_WARNING_DAYS
+                )
+            )
+
+            if is_overdue or pct > self.BUDGET_RED_THRESHOLD:
+                project.health_status = 'red'
+            elif is_near_deadline or (
+                pct > self.BUDGET_YELLOW_THRESHOLD
+                and pct <= self.BUDGET_RED_THRESHOLD
+            ):
+                project.health_status = 'yellow'
+            else:
+                project.health_status = 'green'
+
+    @api.depends('task_ids')
+    def _compute_task_count(self):
+        for project in self:
+            project.task_count = len(project.task_ids)
+
+    @api.depends('end_date')
+    def _compute_overdue(self):
+        today = fields.Date.today()
+        for project in self:
+            project.overdue = bool(
+                project.end_date and project.end_date < today
+            )
+
+    # ── State transition actions ───────────────────────────────
+
+    def action_start(self):
+        """Черновик → В работе."""
+        for project in self:
+            if project.state != 'draft':
+                raise UserError(
+                    'Начать можно только объект в статусе "Черновик".'
+                )
+            vals = {'state': 'active'}
+            if not project.start_date:
+                vals['start_date'] = fields.Date.today()
+            project.write(vals)
+
+    def action_pause(self):
+        """В работе → Пауза."""
+        for project in self:
+            if project.state != 'active':
+                raise UserError(
+                    'Приостановить можно только объект в статусе "В работе".'
+                )
+            project.write({'state': 'paused'})
+
+    def action_resume(self):
+        """Пауза → В работе."""
+        for project in self:
+            if project.state != 'paused':
+                raise UserError(
+                    'Возобновить можно только объект в статусе "Пауза".'
+                )
+            project.write({'state': 'active'})
+
+    def action_done(self):
+        """В работе → Завершён."""
+        for project in self:
+            if project.state != 'active':
+                raise UserError(
+                    'Завершить можно только объект в статусе "В работе".'
+                )
+            project.write({'state': 'done'})

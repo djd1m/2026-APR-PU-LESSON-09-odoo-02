@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Dashboard Action — preset filters for overview -->
+    <record id="su_project_dashboard_action" model="ir.actions.act_window">
+        <field name="name">Dashboard объектов</field>
+        <field name="res_model">su.project</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="su_project_view_search"/>
+        <field name="context">{
+            'search_default_filter_active': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Нет активных объектов. Создайте первый объект.
+            </p>
+        </field>
+    </record>
+
+    <!-- Dashboard Menu -->
+    <menuitem id="su_dashboard_menu"
+              name="Dashboard"
+              parent="su_main_menu"
+              action="su_project_dashboard_action"
+              sequence="1"/>
+
+</odoo>

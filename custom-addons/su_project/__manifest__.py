@@ -13,6 +13,7 @@
     'data': [
         'security/ir.model.access.csv',
         'views/su_project_views.xml',
+        'views/su_project_dashboard.xml',
     ],
     'installable': True,
     'application': False,
