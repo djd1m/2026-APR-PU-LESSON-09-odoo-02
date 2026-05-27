@@ -132,7 +132,7 @@ class ConcurrentUpdateError(СтройУправError):
 ### 2.3 AI Provider Layer
 
 ```
-Provider chain (LiteLLM):
+Provider chain (OpenAI-compatible client):
   1. Cloud.ru Foundation Models (primary)
   2. Qwen3 via Cloud.ru (fallback #1)
   3. OpenAI GPT-4o (fallback #2, for non-PII requests only)

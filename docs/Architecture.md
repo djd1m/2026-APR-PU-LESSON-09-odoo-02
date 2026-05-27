@@ -34,15 +34,20 @@
               └──┬──────┬─────────┘      └──┬──────┬─────────────┘
                  │      │                   │      │
      ┌───────────▼──┐   │      ┌────────────▼──┐   │
-     │  PostgreSQL  │◄──┼──────┤  LiteLLM GW   │   │
-     │  (primary)   │   │      │  (AI routing)  │   │
-     └──────────────┘   │      └──┬──────┬──────┘   │
-                        │         │      │          │
-              ┌─────────▼───┐  ┌──▼──┐ ┌─▼────────┐│
-              │Redis + Celery│  │Cloud│ │OpenAI/   ││
-              │(queue/cache) │  │.ru  │ │Anthropic ││
-              └─────────────┘  │FM   │ │(fallback)││
-                               └─────┘ └──────────┘│
+     │  PostgreSQL  │◄──┘                    │      │
+     │  (primary)   │                       │      │
+     └──────────────┘           ┌───────────▼──┐   │
+                                │ OpenAI-      │   │
+              ┌─────────────┐   │ compatible   │   │
+              │Redis + Celery│   │ client       │   │
+              │(queue/cache) │   │ (env switch) │   │
+              └─────────────┘   └──┬──────┬────┘   │
+                                   │      │        │
+                                ┌──▼──┐ ┌─▼───────┐│
+                                │Cloud│ │OpenAI/  ││
+                                │.ru  │ │Anthropic││
+                                │FM   │ │(fallback)│
+                                └─────┘ └─────────┘│
               ┌─────────────┐  ┌──────────────────┐ │
               │    MinIO     │  │  Elasticsearch   │ │
               │  (S3 photos) │  │  (ГЭСН/ФЕР)     │◄┘
@@ -164,8 +169,7 @@ stroyuprav_onboarding ──▶ res.users (profile setup)
 | **Mobile**      | PWA (Phase 1) → React Native (Phase 2) | PWA: быстрый старт; RN: push, камера, offline              |
 | **Database**    | PostgreSQL 16                    | Odoo-совместим, JSONB для flexible fields, отлично масштабируется |
 | **AI/ML**       | Cloud.ru Foundation Models (primary) | Данные в РФ (152-ФЗ), OpenAI-compatible API               |
-| **AI Fallback** | OpenAI / Anthropic via LiteLLM   | Resilience, A/B testing моделей                             |
-| **AI Gateway**  | LiteLLM                          | Unified API, retry/fallback, cost tracking                  |
+| **AI Fallback** | OpenAI / Anthropic               | Resilience, A/B testing моделей. Тот же OpenAI-compatible API |
 | **RAG**         | Cloud.ru Managed RAG             | ГЭСН/ФЕР normative base, managed infrastructure            |
 | **Fine-tuning** | Cloud.ru ML Finetuning           | Custom estimate model на исторических сметах                 |
 | **Search**      | Elasticsearch / Meilisearch      | Full-text search по ГЭСН/ФЕР (200K+ расценок)             |
@@ -254,7 +258,10 @@ stroyuprav_onboarding ──▶ res.users (profile setup)
 
 ## 6. AI Architecture
 
-### LiteLLM Gateway
+### AI Provider (OpenAI-compatible client)
+
+Оба провайдера (Cloud.ru и OpenAI) предоставляют OpenAI-совместимый API.
+Переключение — через env vars `AI_BASE_URL` + `AI_API_KEY`. Никакого proxy.
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
@@ -268,22 +275,18 @@ stroyuprav_onboarding ──▶ res.users (profile setup)
 │         │                 │                  │                 │
 │         ▼                 ▼                  ▼                 │
 │  ┌────────────────────────────────────────────────────────┐   │
-│  │                   LiteLLM Gateway                      │   │
+│  │              AIClient (OpenAI SDK wrapper)              │   │
 │  │                                                        │   │
-│  │  ┌─────────────────────────────────────────────────┐   │   │
-│  │  │  Router (priority-based failover)               │   │   │
-│  │  │                                                 │   │   │
-│  │  │  1. Cloud.ru FM    (primary, lowest latency)    │   │   │
-│  │  │  2. OpenAI         (fallback #1)                │   │   │
-│  │  │  3. Anthropic      (fallback #2)                │   │   │
-│  │  └─────────────────────────────────────────────────┘   │   │
+│  │  client = OpenAI(                                      │   │
+│  │    base_url=env("AI_BASE_URL"),  # Cloud.ru or OpenAI  │   │
+│  │    api_key=env("AI_API_KEY"),                          │   │
+│  │  )                                                     │   │
 │  │                                                        │   │
 │  │  Features:                                             │   │
-│  │  - Unified OpenAI-compatible API                       │   │
+│  │  - Switch provider via env var (zero code change)      │   │
 │  │  - Auto-retry with exponential backoff                 │   │
-│  │  - Cost tracking per request                           │   │
-│  │  - Model aliasing (estimate_model → Qwen3-Coder-480B) │   │
-│  │  - Rate limiting per tenant                            │   │
+│  │  - Cost tracking per request (logged to DB)            │   │
+│  │  - Model aliasing via config dict                      │   │
 │  │  - Response caching (Redis, TTL 1h for estimates)      │   │
 │  └────────────────────────────────────────────────────────┘   │
 └────────────────────────────────────────────────────────────────┘
@@ -601,7 +604,7 @@ Kubernetes Cluster (Managed K8s)
 | PostgreSQL connections          | > 80% max      | Add read replica or PgBouncer       |
 | CPU utilization (sustained)     | > 70%          | Vertical scale or add node          |
 | Disk usage                      | > 80%          | Expand volume / archive old photos  |
-| AI request queue wait time      | > 30s          | Scale FastAPI + increase LiteLLM concurrency |
+| AI request queue wait time      | > 30s          | Scale FastAPI workers + Celery concurrency |
 
 ---
 

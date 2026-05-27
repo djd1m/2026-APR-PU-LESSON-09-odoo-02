@@ -1006,12 +1006,12 @@ function handle_yukassa_webhook(request: Request):
 
 ---
 
-## 8. AI Provider Routing (LiteLLM Gateway)
+## 8. AI Provider Routing (OpenAI-compatible client Gateway)
 
 ```python
 # =============================================================================
 # AI PROVIDER ROUTING: Cloud.ru primary, OpenAI fallback
-# Gateway: LiteLLM (OpenAI-compatible API)
+# Gateway: OpenAI-compatible client (OpenAI-compatible API)
 # Retry: exponential backoff, provider switch on 3 failures
 # =============================================================================
 
@@ -1087,7 +1087,7 @@ function ai_request(task_type: str, messages: list, **kwargs) -> AIResponse:
         # Retry loop с exponential backoff
         for attempt in range(MAX_RETRIES):
             try:
-                response = litellm.completion(
+                response = openai_client.chat.completions.create(
                     model=f"{provider_name}/{model}",
                     messages=messages,
                     api_base=config["base_url"],

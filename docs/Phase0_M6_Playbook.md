@@ -94,15 +94,28 @@
 
 **Fallback-провайдер:** OpenAI / Anthropic (для R&D, бенчмарков, edge-case моделей)
 
-#### Архитектура dual-provider (через LiteLLM gateway)
+#### Архитектура dual-provider (OpenAI-compatible API)
+
+Оба провайдера предоставляют идентичный OpenAI-compatible API.
+Переключение — через env vars `AI_BASE_URL` + `AI_API_KEY`. Без proxy.
+
+```python
+# Cloud.ru (production, данные в РФ)
+AI_BASE_URL=https://api.cloud.ru/v1
+AI_API_KEY=<cloud-ru-key>
+
+# OpenAI (fallback / R&D)
+AI_BASE_URL=https://api.openai.com/v1
+AI_API_KEY=<openai-key>
+```
 
 ```
 ┌──────────────────────────────────────────────┐
 │  СтройУправ Backend                          │
 │                                              │
 │  ┌──────────────┐    ┌─────────────────────┐ │
-│  │  AI-сметчик  │───▶│  LiteLLM Gateway    │ │
-│  │  (LangChain) │    │  (OpenAI-compatible) │ │
+│  │  AI-сметчик  │───▶│  OpenAI SDK client  │ │
+│  │  (LangChain) │    │  (base_url=env var) │ │
 │  └──────────────┘    └───────┬─────────────┘ │
 │                              │               │
 │              ┌───────────────┼───────────┐   │
@@ -139,7 +152,7 @@
 2. **Цена** — ₽35-70/1M tokens vs $2.50-10/1M tokens у OpenAI (в 10-50× дешевле)
 3. **Fine-tuning** — можно дообучить модель на реальных сметах ГЭСН/ФЕР без экспорта данных
 4. **Managed RAG** — готовый сервис для нормативной базы без своей инфраструктуры
-5. **OpenAI-совместимый API** — переключение между Cloud.ru и OpenAI через LiteLLM = 1 строка конфига
+5. **OpenAI-совместимый API** — переключение между Cloud.ru и OpenAI = 1 env var (`AI_BASE_URL`)
 | **Search** | Elasticsearch / Meilisearch | Поиск по базе ГЭСН/ФЕР |
 | **Storage** | S3-compatible (MinIO) | Фото, чертежи, документы |
 | **Queue** | Redis + Celery | Фоновые задачи (AI-генерация смет) |

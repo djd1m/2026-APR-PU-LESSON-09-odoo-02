@@ -196,7 +196,7 @@ US-05: Как прораб,
 
 ### Constraints
 - **Architecture:** Distributed Monolith в Monorepo (Docker + Docker Compose на VPS)
-- **AI Provider:** Cloud.ru Foundation Models (primary) + OpenAI/Anthropic (fallback) через LiteLLM
+- **AI Provider:** Cloud.ru Foundation Models (primary) + OpenAI/Anthropic (fallback), OpenAI-compatible API, переключение через env var
 - **Database:** PostgreSQL (Odoo-совместимый)
 - **Deploy:** Docker Compose на VPS (AdminVPS/HOSTKEY)
 - **Budget:** Pre-seed ₽5-10М (8 чел. команда, 3 мес до MVP)
