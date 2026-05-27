@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Foreman: only tasks of own brigade -->
+        <record id="su_task_rule_foreman" model="ir.rule">
+            <field name="name">Прораб: задачи своей бригады</field>
+            <field name="model_id" ref="model_su_task"/>
+            <field name="groups" eval="[(4, ref('su_base.group_su_foreman'))]"/>
+            <field name="domain_force">[
+                '|',
+                ('brigade_id.foreman_id', '=', user.id),
+                ('brigade_id.member_ids', 'in', user.id)
+            ]</field>
+        </record>
+
+        <!-- Manager: all tasks -->
+        <record id="su_task_rule_manager" model="ir.rule">
+            <field name="name">Руководитель: все задачи</field>
+            <field name="model_id" ref="model_su_task"/>
+            <field name="groups" eval="[(4, ref('su_base.group_su_manager'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+        </record>
+
+        <!-- Client: deny all (until project sharing F11) -->
+        <record id="su_task_rule_client" model="ir.rule">
+            <field name="name">Заказчик: нет доступа (до F11)</field>
+            <field name="model_id" ref="model_su_task"/>
+            <field name="groups" eval="[(4, ref('su_base.group_su_client'))]"/>
+            <field name="domain_force">[(1, '=', 0)]</field>
+        </record>
+
+        <!-- Foreman: only own brigade -->
+        <record id="su_brigade_rule_foreman" model="ir.rule">
+            <field name="name">Прораб: своя бригада</field>
+            <field name="model_id" ref="model_su_brigade"/>
+            <field name="groups" eval="[(4, ref('su_base.group_su_foreman'))]"/>
+            <field name="domain_force">[
+                '|',
+                ('foreman_id', '=', user.id),
+                ('member_ids', 'in', user.id)
+            ]</field>
+        </record>
+
+        <!-- Manager: all brigades -->
+        <record id="su_brigade_rule_manager" model="ir.rule">
+            <field name="name">Руководитель: все бригады</field>
+            <field name="model_id" ref="model_su_brigade"/>
+            <field name="groups" eval="[(4, ref('su_base.group_su_manager'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+        </record>
+
+    </data>
+</odoo>

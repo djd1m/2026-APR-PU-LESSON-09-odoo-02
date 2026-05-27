@@ -23,6 +23,7 @@
                 <field name="deadline"/>
                 <field name="progress" widget="progressbar"/>
                 <field name="is_blocked" widget="boolean"/>
+                <field name="subtask_count" string="Подзадач" optional="show"/>
                 <field name="planned_cost" widget="monetary" optional="hide"/>
                 <field name="currency_id" column_invisible="True"/>
             </tree>
@@ -38,7 +39,8 @@
                 <header>
                     <button name="action_start" type="object"
                             string="В работу" class="oe_highlight"
-                            invisible="state != 'new'"/>
+                            invisible="state != 'new'"
+                            confirm="Начать работу над задачей?"/>
                     <button name="action_review" type="object"
                             string="На проверку" class="oe_highlight"
                             invisible="state != 'in_progress'"/>
@@ -47,10 +49,11 @@
                             invisible="state != 'review'"/>
                     <button name="action_reopen" type="object"
                             string="Вернуть в работу"
-                            invisible="state != 'review'"/>
+                            invisible="state not in ('review', 'done')"/>
                     <button name="action_cancel" type="object"
                             string="Отменить"
-                            invisible="state in ('done', 'cancelled')"/>
+                            invisible="state in ('done', 'cancelled')"
+                            confirm="Отменить задачу? Зависимые задачи будут заблокированы."/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="new,in_progress,review,done"/>
                 </header>
@@ -60,6 +63,10 @@
                                 name="%(su_photo.su_photo_action)d" type="action"
                                 context="{'default_task_id': id, 'default_project_id': project_id}">
                             <field name="photo_ids" widget="statinfo" string="Фото"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-tasks"
+                                type="object" name="action_view_subtasks">
+                            <field name="subtask_count" widget="statinfo" string="Подзадачи"/>
                         </button>
                     </div>
                     <widget name="web_ribbon" title="Заблокирована"
@@ -93,21 +100,123 @@
                     </group>
                     <notebook>
                         <page string="Зависимости" name="dependencies">
+                            <group>
+                                <div class="alert alert-warning" role="alert"
+                                     invisible="not is_blocked">
+                                    <strong>Задача заблокирована!</strong>
+                                    Незавершённые зависимости не позволяют начать работу.
+                                </div>
+                            </group>
                             <field name="dependency_ids"
-                                   domain="[('project_id', '=', project_id), ('id', '!=', id)]"/>
+                                   domain="[('project_id', '=', project_id), ('id', '!=', id)]">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'done'"
+                                           decoration-info="state == 'in_progress'"
+                                           decoration-warning="state == 'review'"
+                                           decoration-muted="state == 'cancelled'"/>
+                                    <field name="deadline"/>
+                                    <field name="progress" widget="progressbar"/>
+                                </tree>
+                            </field>
                         </page>
                         <page string="Подзадачи" name="subtasks">
                             <field name="child_ids">
-                                <tree>
+                                <tree editable="bottom">
                                     <field name="name"/>
-                                    <field name="state" widget="badge"/>
-                                    <field name="assignee_id"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'done'"
+                                           decoration-info="state == 'in_progress'"
+                                           decoration-warning="state == 'review'"
+                                           decoration-muted="state == 'cancelled'"/>
+                                    <field name="assignee_id" widget="many2one_avatar_user"/>
+                                    <field name="brigade_id"/>
+                                    <field name="deadline"/>
                                     <field name="progress" widget="progressbar"/>
+                                    <field name="project_id" column_invisible="True"/>
                                 </tree>
                             </field>
                         </page>
                     </notebook>
                 </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Task Kanban View -->
+    <record id="su_task_view_kanban" model="ir.ui.view">
+        <field name="name">su.task.kanban</field>
+        <field name="model">su.task</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state"
+                    class="o_kanban_small_column"
+                    on_create="quick_create"
+                    quick_create_view="su_task.su_task_view_form_quick_create"
+                    examples="su_task">
+                <field name="name"/>
+                <field name="state"/>
+                <field name="priority"/>
+                <field name="brigade_id"/>
+                <field name="assignee_id"/>
+                <field name="deadline"/>
+                <field name="progress"/>
+                <field name="is_blocked"/>
+                <field name="subtask_count"/>
+                <field name="project_id"/>
+                <progressbar field="state"
+                             colors='{"new": "secondary", "in_progress": "primary", "review": "warning", "done": "success", "cancelled": "muted"}'/>
+                <templates>
+                    <t t-name="kanban-card">
+                        <div t-attf-class="#{record.is_blocked.raw_value ? 'border-danger border-2' : ''}">
+                            <field name="priority" widget="priority"/>
+                            <strong>
+                                <field name="name"/>
+                            </strong>
+                            <div class="text-muted small">
+                                <field name="project_id"/>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <field name="brigade_id"/>
+                                <field name="assignee_id" widget="many2one_avatar_user"/>
+                            </div>
+                            <div class="mt-1" t-if="record.deadline.raw_value">
+                                <span class="fa fa-clock-o"/> <field name="deadline"/>
+                            </div>
+                            <field name="progress" widget="progressbar"/>
+                            <div t-if="record.is_blocked.raw_value"
+                                 class="badge text-bg-danger mt-1">
+                                Заблокирована
+                            </div>
+                            <div t-if="record.subtask_count.raw_value"
+                                 class="text-muted small mt-1">
+                                <span class="fa fa-tasks"/>
+                                <field name="subtask_count"/> подзадач
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Quick Create Form for Kanban -->
+    <record id="su_task_view_form_quick_create" model="ir.ui.view">
+        <field name="name">su.task.form.quick_create</field>
+        <field name="model">su.task</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="name" placeholder="Название задачи"/>
+                    <field name="project_id"/>
+                    <field name="brigade_id"/>
+                    <field name="deadline"/>
+                </group>
             </form>
         </field>
     </record>
@@ -116,7 +225,7 @@
     <record id="su_task_action" model="ir.actions.act_window">
         <field name="name">Задачи</field>
         <field name="res_model">su.task</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">kanban,tree,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Создайте первую задачу
