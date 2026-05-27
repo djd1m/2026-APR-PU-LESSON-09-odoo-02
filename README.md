@@ -4,6 +4,10 @@ Mobile-first ERP for construction and renovation with AI-powered cost estimation
 
 **Смета за 5 минут по ГЭСН/ФЕР + все объекты в одном экране + AI-прогнозы**
 
+## Documentation
+- [Документация на русском](./README/ru/README.md)
+- [English documentation](./README/eng/README.md)
+
 ## Quick Start
 
 ```bash
