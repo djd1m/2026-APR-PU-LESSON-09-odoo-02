@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ─── Form View (wizard-style) ──────────────────────────── -->
+        <record id="su_onboarding_form_view" model="ir.ui.view">
+            <field name="name">su.onboarding.form</field>
+            <field name="model">su.onboarding</field>
+            <field name="arch" type="xml">
+                <form string="Онбординг">
+                    <header>
+                        <button name="action_skip"
+                                string="Пропустить"
+                                type="object"
+                                class="btn-secondary"
+                                invisible="completed"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>Анкета нового пользователя</h1>
+                        </div>
+
+                        <group string="Шаг 1: Тип компании">
+                            <field name="company_type"
+                                   widget="radio"
+                                   required="not completed"/>
+                        </group>
+
+                        <group string="Шаг 2: Количество объектов">
+                            <field name="object_count"
+                                   widget="radio"
+                                   required="not completed"/>
+                        </group>
+
+                        <group string="Шаг 3: Текущие инструменты">
+                            <field name="current_tools"
+                                   placeholder="Excel, 1C, WhatsApp, другое"/>
+                        </group>
+
+                        <group string="Шаг 4: Главная проблема">
+                            <field name="biggest_pain"
+                                   widget="radio"
+                                   required="not completed"/>
+                        </group>
+
+                        <group string="Результат"
+                               invisible="not completed or skipped">
+                            <field name="recommended_plan" readonly="1"/>
+                        </group>
+
+                        <group string="Статус">
+                            <field name="completed" readonly="1"/>
+                            <field name="skipped" readonly="1"/>
+                            <field name="completed_at" readonly="1"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="company_id" readonly="1"
+                                   groups="base.group_multi_company"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- ─── Tree View ─────────────────────────────────────────── -->
+        <record id="su_onboarding_tree_view" model="ir.ui.view">
+            <field name="name">su.onboarding.tree</field>
+            <field name="model">su.onboarding</field>
+            <field name="arch" type="xml">
+                <tree string="Онбординг">
+                    <field name="partner_id"/>
+                    <field name="company_type"/>
+                    <field name="object_count"/>
+                    <field name="recommended_plan"/>
+                    <field name="completed"
+                           decoration-success="completed"
+                           decoration-warning="not completed"/>
+                    <field name="skipped"/>
+                    <field name="completed_at"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- ─── Search View ───────────────────────────────────────── -->
+        <record id="su_onboarding_search_view" model="ir.ui.view">
+            <field name="name">su.onboarding.search</field>
+            <field name="model">su.onboarding</field>
+            <field name="arch" type="xml">
+                <search string="Онбординг">
+                    <field name="partner_id"/>
+                    <field name="company_type"/>
+                    <filter name="filter_completed"
+                            string="Завершённые"
+                            domain="[('completed', '=', True)]"/>
+                    <filter name="filter_skipped"
+                            string="Пропущенные"
+                            domain="[('skipped', '=', True)]"/>
+                    <filter name="filter_pending"
+                            string="Ожидают"
+                            domain="[('completed', '=', False)]"/>
+                    <group expand="0" string="Группировка">
+                        <filter name="group_company_type"
+                                string="Тип компании"
+                                context="{'group_by': 'company_type'}"/>
+                        <filter name="group_recommended_plan"
+                                string="Рекомендуемый план"
+                                context="{'group_by': 'recommended_plan'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- ─── Action ────────────────────────────────────────────── -->
+        <record id="su_onboarding_action" model="ir.actions.act_window">
+            <field name="name">Онбординг</field>
+            <field name="res_model">su.onboarding</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="su_onboarding_search_view"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Нет записей онбординга
+                </p>
+                <p>
+                    Записи создаются автоматически при прохождении
+                    квиза новым пользователем.
+                </p>
+            </field>
+        </record>
+
+        <!-- ─── Menu ──────────────────────────────────────────────── -->
+        <menuitem id="su_onboarding_menu_root"
+                  name="Онбординг"
+                  parent="su_project.su_main_menu"
+                  action="su_onboarding_action"
+                  sequence="90"
+                  groups="su_base.group_su_admin"/>
+
+    </data>
+</odoo>

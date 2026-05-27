@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_su_onboarding_foreman,su.onboarding.foreman,model_su_onboarding,su_base.group_su_foreman,1,1,1,0
+access_su_onboarding_manager,su.onboarding.manager,model_su_onboarding,su_base.group_su_manager,1,1,1,0
+access_su_onboarding_admin,su.onboarding.admin,model_su_onboarding,su_base.group_su_admin,1,1,1,1
+access_su_onboarding_client,su.onboarding.client,model_su_onboarding,su_base.group_su_client,1,0,0,0

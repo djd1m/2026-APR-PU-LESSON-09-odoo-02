@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Foreman: own brigade projects + own authored photos -->
+    <record id="su_photo_rule_foreman" model="ir.rule">
+        <field name="name">su.photo: foreman — own brigade projects or own photos</field>
+        <field name="model_id" ref="model_su_photo"/>
+        <field name="domain_force">[
+            '|',
+            ('author_id', '=', user.id),
+            ('project_id.task_ids.brigade_id.foreman_id', '=', user.id)
+        ]</field>
+        <field name="groups" eval="[(4, ref('su_base.group_su_foreman'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Manager: own company -->
+    <record id="su_photo_rule_manager" model="ir.rule">
+        <field name="name">su.photo: manager — own company</field>
+        <field name="model_id" ref="model_su_photo"/>
+        <field name="domain_force">[('company_id', '=', user.company_id.id)]</field>
+        <field name="groups" eval="[(4, ref('su_base.group_su_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Admin: all (no domain restriction) -->
+    <record id="su_photo_rule_admin" model="ir.rule">
+        <field name="name">su.photo: admin — full access</field>
+        <field name="model_id" ref="model_su_photo"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('su_base.group_su_admin'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Client: deny all until F11 (Client Portal) -->
+    <record id="su_photo_rule_client" model="ir.rule">
+        <field name="name">su.photo: client — denied until portal</field>
+        <field name="model_id" ref="model_su_photo"/>
+        <field name="domain_force">[(1, '=', 0)]</field>
+        <field name="groups" eval="[(4, ref('su_base.group_su_client'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+</odoo>
