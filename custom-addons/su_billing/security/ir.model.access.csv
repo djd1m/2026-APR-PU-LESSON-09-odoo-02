@@ -1,3 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_su_subscription_manager,su.subscription.manager,model_su_subscription,su_base.group_su_manager,1,0,0,0
 access_su_subscription_admin,su.subscription.admin,model_su_subscription,su_base.group_su_admin,1,1,1,1
+access_su_payment_manager,su.payment.manager,model_su_payment,su_base.group_su_manager,1,0,0,0
+access_su_payment_admin,su.payment.admin,model_su_payment,su_base.group_su_admin,1,1,1,1
+access_su_webhook_log_admin,su.webhook.log.admin,model_su_webhook_log,su_base.group_su_admin,1,1,1,0
