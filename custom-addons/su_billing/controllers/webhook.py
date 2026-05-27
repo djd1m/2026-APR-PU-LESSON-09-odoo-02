@@ -21,8 +21,13 @@ from odoo.http import request, Response
 
 _logger = logging.getLogger(__name__)
 
-# Webhook secret for HMAC verification — loaded from env var
-YUKASSA_WEBHOOK_SECRET = os.environ.get('YUKASSA_WEBHOOK_SECRET', '')
+# Webhook secret for HMAC verification — crash on startup if missing
+YUKASSA_WEBHOOK_SECRET = os.environ.get('YUKASSA_WEBHOOK_SECRET')
+if not YUKASSA_WEBHOOK_SECRET:
+    raise RuntimeError(
+        "YUKASSA_WEBHOOK_SECRET env var is required. "
+        "Cannot start without webhook signature verification."
+    )
 
 
 def _json_response(data, status=200):

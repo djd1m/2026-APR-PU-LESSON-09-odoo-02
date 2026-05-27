@@ -40,6 +40,8 @@ if not JWT_SECRET_KEY:
 # JWT configuration
 JWT_ACCESS_TTL = timedelta(minutes=15)
 JWT_REFRESH_TTL = timedelta(days=7)
+# TODO(security): migrate to RS256 with key rotation before production.
+# HS256 acceptable for MVP — secret is env-only, no fallback.
 JWT_ALGORITHM = 'HS256'
 
 # Cookie settings — httpOnly, Secure, SameSite=Strict
