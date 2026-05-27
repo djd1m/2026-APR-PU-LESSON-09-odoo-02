@@ -1,15 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Search View -->
+    <record id="su_project_view_search" model="ir.ui.view">
+        <field name="name">su.project.search</field>
+        <field name="model">su.project</field>
+        <field name="arch" type="xml">
+            <search string="Поиск объектов">
+                <field name="name" string="Название"/>
+                <field name="address"/>
+                <field name="manager_id"/>
+                <separator/>
+                <filter name="filter_active" string="В работе"
+                        domain="[('state', '=', 'active')]"/>
+                <filter name="filter_draft" string="Черновики"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_paused" string="На паузе"
+                        domain="[('state', '=', 'paused')]"/>
+                <filter name="filter_done" string="Завершённые"
+                        domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="filter_problematic" string="Проблемные"
+                        domain="[('health_status', 'in', ['yellow', 'red'])]"/>
+                <filter name="filter_overdue" string="Просроченные"
+                        domain="[('overdue', '=', True)]"/>
+                <filter name="filter_red" string="Критичные"
+                        domain="[('health_status', '=', 'red')]"/>
+                <separator/>
+                <filter name="filter_renovation" string="Ремонт"
+                        domain="[('project_type', '=', 'renovation')]"/>
+                <filter name="filter_construction" string="Строительство"
+                        domain="[('project_type', '=', 'construction')]"/>
+                <filter name="filter_izhs" string="ИЖС"
+                        domain="[('project_type', '=', 'izhs')]"/>
+                <separator/>
+                <group expand="0" string="Группировка">
+                    <filter name="group_state" string="Статус"
+                            context="{'group_by': 'state'}"/>
+                    <filter name="group_type" string="Тип объекта"
+                            context="{'group_by': 'project_type'}"/>
+                    <filter name="group_manager" string="Ответственный"
+                            context="{'group_by': 'manager_id'}"/>
+                    <filter name="group_health" string="Статус здоровья"
+                            context="{'group_by': 'health_status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <!-- Tree View -->
     <record id="su_project_view_tree" model="ir.ui.view">
         <field name="name">su.project.tree</field>
         <field name="model">su.project</field>
         <field name="arch" type="xml">
             <tree string="Объекты"
-                  decoration-success="state == 'done'"
-                  decoration-warning="state == 'paused'"
-                  decoration-info="state == 'active'">
+                  decoration-danger="health_status == 'red'"
+                  decoration-warning="health_status == 'yellow'"
+                  decoration-success="health_status == 'green'">
                 <field name="name"/>
                 <field name="address"/>
                 <field name="project_type"/>
@@ -17,14 +64,24 @@
                        decoration-success="state == 'done'"
                        decoration-warning="state == 'paused'"
                        decoration-info="state == 'active'"/>
-                <field name="area_sqm"/>
+                <field name="area_sqm" optional="hide"/>
                 <field name="budget_planned" widget="monetary"/>
                 <field name="budget_actual" widget="monetary"/>
+                <field name="budget_deviation_pct" string="Откл. %"
+                       decoration-danger="budget_deviation_pct &gt; 15"
+                       decoration-warning="budget_deviation_pct &gt; 5"/>
                 <field name="progress" widget="progressbar"/>
-                <field name="manager_id"/>
+                <field name="health_status" widget="badge"
+                       decoration-danger="health_status == 'red'"
+                       decoration-warning="health_status == 'yellow'"
+                       decoration-success="health_status == 'green'"/>
+                <field name="manager_id" widget="many2one_avatar_user"/>
                 <field name="start_date"/>
-                <field name="end_date"/>
+                <field name="end_date"
+                       decoration-danger="overdue == True"/>
+                <field name="task_count" string="Задач" optional="show"/>
                 <field name="currency_id" column_invisible="True"/>
+                <field name="overdue" column_invisible="True"/>
             </tree>
         </field>
     </record>
@@ -36,10 +93,36 @@
         <field name="arch" type="xml">
             <form string="Строительный объект">
                 <header>
+                    <button name="action_start" type="object"
+                            string="Начать" class="btn-primary"
+                            invisible="state != 'draft'"
+                            groups="su_base.group_su_manager"/>
+                    <button name="action_pause" type="object"
+                            string="Приостановить" class="btn-warning"
+                            invisible="state != 'active'"
+                            groups="su_base.group_su_manager"/>
+                    <button name="action_resume" type="object"
+                            string="Возобновить" class="btn-primary"
+                            invisible="state != 'paused'"
+                            groups="su_base.group_su_manager"/>
+                    <button name="action_done" type="object"
+                            string="Завершить" class="btn-success"
+                            invisible="state != 'active'"
+                            groups="su_base.group_su_manager"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,active,done"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_tasks" type="object"
+                                class="oe_stat_button" icon="fa-tasks">
+                            <field name="task_count" widget="statinfo"
+                                   string="Задачи"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Просрочен"
+                            bg_color="bg-danger"
+                            invisible="overdue != True"/>
                     <div class="oe_title">
                         <h1>
                             <field name="name" placeholder="Название объекта"/>
@@ -51,15 +134,19 @@
                             <field name="project_type"/>
                             <field name="area_sqm"/>
                             <field name="manager_id"/>
+                            <field name="health_status" widget="badge"
+                                   decoration-danger="health_status == 'red'"
+                                   decoration-warning="health_status == 'yellow'"
+                                   decoration-success="health_status == 'green'"/>
                         </group>
                         <group>
                             <field name="start_date"/>
                             <field name="end_date"/>
-                            <field name="budget_planned" widget="monetary"/>
-                            <field name="budget_actual" widget="monetary"/>
                             <field name="progress" widget="progressbar"/>
-                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="company_id"
+                                   groups="base.group_multi_company"/>
                             <field name="currency_id" invisible="1"/>
+                            <field name="overdue" invisible="1"/>
                         </group>
                     </group>
                     <notebook>
@@ -71,6 +158,24 @@
                         </page>
                         <page string="Фото" name="photos">
                             <field name="photo_ids"/>
+                        </page>
+                        <page string="Бюджет" name="budget">
+                            <group>
+                                <group string="Плановые показатели">
+                                    <field name="budget_planned"
+                                           widget="monetary"/>
+                                </group>
+                                <group string="Фактические показатели">
+                                    <field name="budget_actual"
+                                           widget="monetary"/>
+                                    <field name="budget_deviation"
+                                           widget="monetary"/>
+                                    <field name="budget_deviation_pct"
+                                           string="Отклонение %"
+                                           decoration-danger="budget_deviation_pct &gt; 15"
+                                           decoration-warning="budget_deviation_pct &gt; 5"/>
+                                </group>
+                            </group>
                         </page>
                     </notebook>
                 </sheet>
@@ -89,11 +194,18 @@
                 <field name="progress"/>
                 <field name="budget_planned"/>
                 <field name="budget_actual"/>
+                <field name="health_status"/>
                 <field name="manager_id"/>
                 <field name="currency_id"/>
+                <field name="end_date"/>
+                <field name="overdue"/>
+                <field name="budget_deviation_pct"/>
                 <templates>
                     <t t-name="kanban-box">
-                        <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click
+                            #{record.health_status.raw_value == 'red' ? 'border-danger' :
+                              record.health_status.raw_value == 'yellow' ? 'border-warning' :
+                              'border-success'}">
                             <div class="oe_kanban_content">
                                 <div class="o_kanban_record_top">
                                     <div class="o_kanban_record_headings">
@@ -101,21 +213,37 @@
                                             <field name="name"/>
                                         </strong>
                                     </div>
+                                    <div class="o_kanban_record_top_right">
+                                        <span t-if="record.health_status.raw_value == 'red'"
+                                              class="badge text-bg-danger">Критично</span>
+                                        <span t-elif="record.health_status.raw_value == 'yellow'"
+                                              class="badge text-bg-warning">Внимание</span>
+                                        <span t-else=""
+                                              class="badge text-bg-success">В норме</span>
+                                    </div>
                                 </div>
                                 <div class="o_kanban_record_body">
                                     <field name="progress" widget="progressbar"/>
-                                    <div>
+                                    <div class="mt-1">
                                         <span>План: </span>
-                                        <field name="budget_planned" widget="monetary"/>
+                                        <field name="budget_planned"
+                                               widget="monetary"/>
                                     </div>
                                     <div>
                                         <span>Факт: </span>
-                                        <field name="budget_actual" widget="monetary"/>
+                                        <field name="budget_actual"
+                                               widget="monetary"/>
+                                    </div>
+                                    <div t-if="record.end_date.raw_value">
+                                        <span t-attf-class="#{record.overdue.raw_value ? 'text-danger fw-bold' : ''}">
+                                            Срок: <field name="end_date"/>
+                                        </span>
                                     </div>
                                 </div>
                                 <div class="o_kanban_record_bottom">
                                     <div class="oe_kanban_bottom_left">
-                                        <field name="manager_id" widget="many2one_avatar_user"/>
+                                        <field name="manager_id"
+                                               widget="many2one_avatar_user"/>
                                     </div>
                                 </div>
                             </div>
@@ -126,11 +254,12 @@
         </field>
     </record>
 
-    <!-- Action -->
+    <!-- Main Action -->
     <record id="su_project_action" model="ir.actions.act_window">
         <field name="name">Объекты</field>
         <field name="res_model">su.project</field>
         <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="su_project_view_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Создайте первый строительный объект
