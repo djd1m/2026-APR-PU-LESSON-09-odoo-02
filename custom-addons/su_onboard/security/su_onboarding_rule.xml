@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Foreman: can only read/write own onboarding record -->
+        <record id="su_onboarding_rule_foreman" model="ir.rule">
+            <field name="name">Onboarding: foreman own record</field>
+            <field name="model_id" ref="model_su_onboarding"/>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('su_base.group_su_foreman'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Client: can only read own onboarding record -->
+        <record id="su_onboarding_rule_client" model="ir.rule">
+            <field name="name">Onboarding: client own record</field>
+            <field name="model_id" ref="model_su_onboarding"/>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('su_base.group_su_client'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Manager: company-wide access -->
+        <record id="su_onboarding_rule_manager" model="ir.rule">
+            <field name="name">Onboarding: manager company records</field>
+            <field name="model_id" ref="model_su_onboarding"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+            <field name="groups" eval="[(4, ref('su_base.group_su_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+    </data>
+</odoo>
