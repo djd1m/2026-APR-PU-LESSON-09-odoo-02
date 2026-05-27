@@ -1,6 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Photo Search View (NEW) -->
+    <record id="su_photo_view_search" model="ir.ui.view">
+        <field name="name">su.photo.search</field>
+        <field name="model">su.photo</field>
+        <field name="arch" type="xml">
+            <search string="Поиск фото">
+                <field name="project_id"/>
+                <field name="task_id"/>
+                <field name="author_id"/>
+                <field name="description"/>
+                <separator/>
+                <filter string="Мои фото" name="my_photos"
+                        domain="[('author_id', '=', uid)]"/>
+                <filter string="Сегодня" name="today"
+                        domain="[('taken_at', '&gt;=', (context_today()).strftime('%Y-%m-%d 00:00:00')),
+                                 ('taken_at', '&lt;', (context_today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d 00:00:00'))]"/>
+                <filter string="Эта неделя" name="this_week"
+                        domain="[('taken_at', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%Y-%m-%d 00:00:00'))]"/>
+                <filter string="С подтверждением прогресса" name="confirms_progress"
+                        domain="[('confirms_progress', '=', True)]"/>
+                <separator/>
+                <group expand="0" string="Группировка">
+                    <filter string="Объект" name="group_project"
+                            context="{'group_by': 'project_id'}"/>
+                    <filter string="Задача" name="group_task"
+                            context="{'group_by': 'task_id'}"/>
+                    <filter string="Месяц" name="group_month"
+                            context="{'group_by': 'taken_at:month'}"/>
+                    <filter string="Автор" name="group_author"
+                            context="{'group_by': 'author_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <!-- Photo Tree View -->
     <record id="su_photo_view_tree" model="ir.ui.view">
         <field name="name">su.photo.tree</field>
@@ -12,8 +47,12 @@
                 <field name="task_id"/>
                 <field name="description"/>
                 <field name="author_id" widget="many2one_avatar_user"/>
+                <field name="confirms_progress"/>
                 <field name="latitude" optional="hide"/>
                 <field name="longitude" optional="hide"/>
+                <field name="file_size" optional="hide" string="Размер"/>
+                <field name="mime_type" optional="hide"/>
+                <field name="camera_model" optional="hide"/>
             </tree>
         </field>
     </record>
@@ -35,12 +74,24 @@
                         </group>
                         <group>
                             <field name="image" widget="image"
-                                   options="{'size': [600, 400]}"/>
+                                   options="{'size': [600, 400]}"
+                                   attrs="{'invisible': [('s3_key', '!=', False)]}"/>
+                            <field name="image_url" widget="url"
+                                   attrs="{'invisible': [('s3_key', '=', False)]}"
+                                   string="Фото (S3)"/>
                             <field name="image_filename" invisible="1"/>
+                            <field name="s3_key" invisible="1"/>
                         </group>
                     </group>
                     <group>
                         <field name="description"/>
+                    </group>
+                    <group string="Прогресс">
+                        <group>
+                            <field name="confirms_progress"/>
+                            <field name="progress_delta"
+                                   attrs="{'invisible': [('confirms_progress', '=', False)]}"/>
+                        </group>
                     </group>
                     <group string="Геолокация">
                         <group>
@@ -48,6 +99,15 @@
                         </group>
                         <group>
                             <field name="longitude"/>
+                        </group>
+                    </group>
+                    <group string="Метаданные файла" attrs="{'invisible': [('file_size', '=', 0)]}">
+                        <group>
+                            <field name="file_size"/>
+                            <field name="mime_type"/>
+                        </group>
+                        <group>
+                            <field name="camera_model"/>
                         </group>
                     </group>
                 </sheet>
@@ -62,22 +122,33 @@
         <field name="arch" type="xml">
             <kanban class="o_kanban_mobile">
                 <field name="image"/>
+                <field name="image_url"/>
+                <field name="s3_key"/>
                 <field name="project_id"/>
                 <field name="task_id"/>
                 <field name="taken_at"/>
                 <field name="description"/>
+                <field name="confirms_progress"/>
                 <templates>
                     <t t-name="kanban-box">
                         <div class="oe_kanban_card oe_kanban_global_click">
                             <div class="o_kanban_image">
-                                <img t-att-src="kanban_image('su.photo', 'image', record.id.raw_value)"
-                                     alt="Photo" class="o_image_64_contain"/>
+                                <t t-if="record.s3_key.raw_value">
+                                    <img t-att-src="record.image_url.raw_value"
+                                         alt="Photo" class="o_image_64_contain"/>
+                                </t>
+                                <t t-else="">
+                                    <img t-att-src="kanban_image('su.photo', 'image', record.id.raw_value)"
+                                         alt="Photo" class="o_image_64_contain"/>
+                                </t>
                             </div>
                             <div class="oe_kanban_details">
                                 <strong><field name="project_id"/></strong>
                                 <div><field name="task_id"/></div>
                                 <div class="text-muted"><field name="taken_at"/></div>
                                 <div><field name="description"/></div>
+                                <div t-if="record.confirms_progress.raw_value"
+                                     class="badge badge-success">Прогресс</div>
                             </div>
                         </div>
                     </t>
@@ -91,6 +162,8 @@
         <field name="name">Фотофиксация</field>
         <field name="res_model">su.photo</field>
         <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="su_photo_view_search"/>
+        <field name="context">{'search_default_my_photos': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Загрузите первое фото с объекта
