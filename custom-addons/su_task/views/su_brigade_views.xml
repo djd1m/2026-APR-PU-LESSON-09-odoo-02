@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Brigade Tree View -->
+    <record id="su_brigade_view_tree" model="ir.ui.view">
+        <field name="name">su.brigade.tree</field>
+        <field name="model">su.brigade</field>
+        <field name="arch" type="xml">
+            <tree string="Бригады">
+                <field name="name"/>
+                <field name="foreman_id" widget="many2one_avatar_user"/>
+                <field name="specialty"/>
+                <field name="member_ids" widget="many2many_tags"
+                       options="{'color_field': 'color'}"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Brigade Form View -->
+    <record id="su_brigade_view_form" model="ir.ui.view">
+        <field name="name">su.brigade.form</field>
+        <field name="model">su.brigade</field>
+        <field name="arch" type="xml">
+            <form string="Бригада">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Название бригады"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="foreman_id"/>
+                            <field name="specialty"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group string="Члены бригады">
+                        <field name="member_ids" widget="many2many_tags" nolabel="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Задачи" name="tasks">
+                            <field name="task_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="project_id"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="deadline"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="su_brigade_action" model="ir.actions.act_window">
+        <field name="name">Бригады</field>
+        <field name="res_model">su.brigade</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Создайте первую бригаду
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem id="su_brigade_menu"
+              name="Бригады"
+              parent="su_project.su_main_menu"
+              action="su_brigade_action"
+              sequence="35"/>
+
+</odoo>

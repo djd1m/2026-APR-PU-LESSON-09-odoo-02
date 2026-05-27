@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Task Tree View -->
+    <record id="su_task_view_tree" model="ir.ui.view">
+        <field name="name">su.task.tree</field>
+        <field name="model">su.task</field>
+        <field name="arch" type="xml">
+            <tree string="Задачи"
+                  decoration-danger="is_blocked"
+                  decoration-success="state == 'done'"
+                  decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-info="state == 'in_progress'"
+                       decoration-warning="state == 'review'"
+                       decoration-muted="state == 'cancelled'"/>
+                <field name="priority" widget="priority"/>
+                <field name="brigade_id"/>
+                <field name="assignee_id" widget="many2one_avatar_user"/>
+                <field name="deadline"/>
+                <field name="progress" widget="progressbar"/>
+                <field name="is_blocked" widget="boolean"/>
+                <field name="planned_cost" widget="monetary" optional="hide"/>
+                <field name="currency_id" column_invisible="True"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Task Form View -->
+    <record id="su_task_view_form" model="ir.ui.view">
+        <field name="name">su.task.form</field>
+        <field name="model">su.task</field>
+        <field name="arch" type="xml">
+            <form string="Задача">
+                <header>
+                    <button name="action_start" type="object"
+                            string="В работу" class="oe_highlight"
+                            invisible="state != 'new'"/>
+                    <button name="action_review" type="object"
+                            string="На проверку" class="oe_highlight"
+                            invisible="state != 'in_progress'"/>
+                    <button name="action_done" type="object"
+                            string="Выполнена" class="oe_highlight"
+                            invisible="state != 'review'"/>
+                    <button name="action_reopen" type="object"
+                            string="Вернуть в работу"
+                            invisible="state != 'review'"/>
+                    <button name="action_cancel" type="object"
+                            string="Отменить"
+                            invisible="state in ('done', 'cancelled')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="new,in_progress,review,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-image"
+                                name="%(su_photo.su_photo_action)d" type="action"
+                                context="{'default_task_id': id, 'default_project_id': project_id}">
+                            <field name="photo_ids" widget="statinfo" string="Фото"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Заблокирована"
+                            bg_color="text-bg-danger"
+                            invisible="not is_blocked"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Название задачи"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="parent_id"
+                                   domain="[('project_id', '=', project_id)]"/>
+                            <field name="brigade_id"/>
+                            <field name="assignee_id"/>
+                        </group>
+                        <group>
+                            <field name="priority" widget="priority"/>
+                            <field name="deadline"/>
+                            <field name="progress" widget="progressbar"/>
+                            <field name="planned_cost" widget="monetary"/>
+                            <field name="is_blocked" invisible="1"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description"/>
+                    </group>
+                    <notebook>
+                        <page string="Зависимости" name="dependencies">
+                            <field name="dependency_ids"
+                                   domain="[('project_id', '=', project_id), ('id', '!=', id)]"/>
+                        </page>
+                        <page string="Подзадачи" name="subtasks">
+                            <field name="child_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="assignee_id"/>
+                                    <field name="progress" widget="progressbar"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="su_task_action" model="ir.actions.act_window">
+        <field name="name">Задачи</field>
+        <field name="res_model">su.task</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Создайте первую задачу
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem id="su_task_menu"
+              name="Задачи"
+              parent="su_project.su_main_menu"
+              action="su_task_action"
+              sequence="30"/>
+
+</odoo>
