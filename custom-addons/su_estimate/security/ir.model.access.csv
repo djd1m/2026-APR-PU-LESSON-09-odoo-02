@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_su_estimate_foreman,su.estimate.foreman,model_su_estimate,su_base.group_su_foreman,1,0,0,0
+access_su_estimate_manager,su.estimate.manager,model_su_estimate,su_base.group_su_manager,1,1,1,0
+access_su_estimate_admin,su.estimate.admin,model_su_estimate,su_base.group_su_admin,1,1,1,1
+access_su_estimate_client,su.estimate.client,model_su_estimate,su_base.group_su_client,1,0,0,0
+access_su_estimate_item_foreman,su.estimate.item.foreman,model_su_estimate_item,su_base.group_su_foreman,1,0,0,0
+access_su_estimate_item_manager,su.estimate.item.manager,model_su_estimate_item,su_base.group_su_manager,1,1,1,0
+access_su_estimate_item_admin,su.estimate.item.admin,model_su_estimate_item,su_base.group_su_admin,1,1,1,1
+access_su_estimate_item_client,su.estimate.item.client,model_su_estimate_item,su_base.group_su_client,1,0,0,0
