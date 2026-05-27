@@ -1,0 +1,28 @@
+{
+  "name": "СтройУправ — Управление стройкой",
+  "short_name": "СтройУправ",
+  "description": "Mobile-first ERP для строительства и ремонта",
+  "start_url": "/web",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#1B5E20",
+  "background_color": "#FFFFFF",
+  "lang": "ru",
+  "dir": "ltr",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/su_project/static/src/pwa/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/su_project/static/src/pwa/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
