@@ -1,0 +1,76 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.whl
+.venv/
+venv/
+env/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+.project
+.classpath
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker persistent data
+postgres-data/
+minio-data/
+es-data/
+redis-data/
+odoo-data/
+
+# Test / coverage
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# Build artifacts
+*.log
+*.pid
+*.sock
+
+# Backups (local only)
+backups/*.sql
+backups/*.gz
+
+# SSL certificates (local)
+nginx/ssl/*.pem
+nginx/ssl/*.key
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Jupyter
+.ipynb_checkpoints/
+
+# MyPy
+.mypy_cache/
