@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         su.expense Views
+         ══════════════════════════════════════════════════════ -->
+
+    <!-- Search View -->
+    <record id="su_expense_view_search" model="ir.ui.view">
+        <field name="name">su.expense.search</field>
+        <field name="model">su.expense</field>
+        <field name="arch" type="xml">
+            <search string="Поиск расходов">
+                <field name="name" string="Описание"/>
+                <field name="project_id"/>
+                <separator/>
+                <filter name="filter_draft" string="Черновики"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_confirmed" string="Подтверждённые"
+                        domain="[('state', '=', 'confirmed')]"/>
+                <filter name="filter_cancelled" string="Отменённые"
+                        domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter name="filter_materials" string="Материалы"
+                        domain="[('category', '=', 'materials')]"/>
+                <filter name="filter_labor" string="Работа"
+                        domain="[('category', '=', 'labor')]"/>
+                <filter name="filter_equipment" string="Оборудование"
+                        domain="[('category', '=', 'equipment')]"/>
+                <filter name="filter_transport" string="Транспорт"
+                        domain="[('category', '=', 'transport')]"/>
+                <filter name="filter_other" string="Прочее"
+                        domain="[('category', '=', 'other')]"/>
+                <separator/>
+                <filter name="filter_this_month" string="Этот месяц"
+                        domain="[('expense_date', '&gt;=', (context_today() - relativedelta(day=1)).strftime('%%Y-%%m-%%d'))]"/>
+                <separator/>
+                <group expand="0" string="Группировка">
+                    <filter name="group_project" string="Объект"
+                            context="{'group_by': 'project_id'}"/>
+                    <filter name="group_category" string="Категория"
+                            context="{'group_by': 'category'}"/>
+                    <filter name="group_state" string="Статус"
+                            context="{'group_by': 'state'}"/>
+                    <filter name="group_month" string="Месяц"
+                            context="{'group_by': 'expense_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="su_expense_view_tree" model="ir.ui.view">
+        <field name="name">su.expense.tree</field>
+        <field name="model">su.expense</field>
+        <field name="arch" type="xml">
+            <tree string="Расходы"
+                  decoration-muted="state == 'cancelled'"
+                  decoration-info="state == 'draft'">
+                <field name="expense_date"/>
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="category"/>
+                <field name="amount" widget="monetary" sum="Итого"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'confirmed'"
+                       decoration-info="state == 'draft'"
+                       decoration-danger="state == 'cancelled'"/>
+                <field name="currency_id" column_invisible="True"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="su_expense_view_form" model="ir.ui.view">
+        <field name="name">su.expense.form</field>
+        <field name="model">su.expense</field>
+        <field name="arch" type="xml">
+            <form string="Расход">
+                <header>
+                    <button name="action_confirm" type="object"
+                            string="Подтвердить" class="btn-primary"
+                            invisible="state != 'draft'"
+                            groups="su_base.group_su_manager"/>
+                    <button name="action_cancel" type="object"
+                            string="Отменить" class="btn-danger"
+                            invisible="state != 'confirmed'"
+                            groups="su_base.group_su_manager"/>
+                    <button name="action_reset_draft" type="object"
+                            string="Вернуть в черновик"
+                            invisible="state != 'cancelled'"
+                            groups="su_base.group_su_manager"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,confirmed"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="project_id"/>
+                            <field name="category"/>
+                            <field name="expense_date"/>
+                        </group>
+                        <group>
+                            <field name="amount" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="company_id"
+                                   groups="base.group_multi_company"/>
+                            <field name="receipt_attachment"
+                                   filename="receipt_filename"/>
+                            <field name="receipt_filename" invisible="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="notes" placeholder="Примечания к расходу..."/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Pivot View -->
+    <record id="su_expense_view_pivot" model="ir.ui.view">
+        <field name="name">su.expense.pivot</field>
+        <field name="model">su.expense</field>
+        <field name="arch" type="xml">
+            <pivot string="Анализ расходов">
+                <field name="category" type="row"/>
+                <field name="expense_date" type="col" interval="month"/>
+                <field name="amount" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Graph View -->
+    <record id="su_expense_view_graph" model="ir.ui.view">
+        <field name="name">su.expense.graph</field>
+        <field name="model">su.expense</field>
+        <field name="arch" type="xml">
+            <graph string="Расходы по категориям" type="bar">
+                <field name="category"/>
+                <field name="amount" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="su_expense_action" model="ir.actions.act_window">
+        <field name="name">Расходы</field>
+        <field name="res_model">su.expense</field>
+        <field name="view_mode">tree,form,pivot,graph</field>
+        <field name="search_view_id" ref="su_expense_view_search"/>
+        <field name="context">{'search_default_filter_confirmed': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Зарегистрируйте первый расход по объекту
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem id="su_expense_menu"
+              name="Расходы"
+              parent="su_main_menu"
+              action="su_expense_action"
+              sequence="20"/>
+
+    <!-- ══════════════════════════════════════════════════════
+         su.project Form — inherit to add Expenses tab + stat button
+         ══════════════════════════════════════════════════════ -->
+
+    <record id="su_project_view_form_budget" model="ir.ui.view">
+        <field name="name">su.project.form.budget</field>
+        <field name="model">su.project</field>
+        <field name="inherit_id" ref="su_project_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Add expense stat button -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_expenses" type="object"
+                        class="oe_stat_button" icon="fa-money">
+                    <field name="expense_count" widget="statinfo"
+                           string="Расходы"/>
+                </button>
+            </xpath>
+            <!-- Add Расходы tab to notebook -->
+            <xpath expr="//page[@name='budget']" position="after">
+                <page string="Расходы" name="expenses">
+                    <field name="expense_ids">
+                        <tree string="Расходы"
+                              decoration-muted="state == 'cancelled'"
+                              decoration-info="state == 'draft'"
+                              editable="bottom">
+                            <field name="expense_date"/>
+                            <field name="name"/>
+                            <field name="category"/>
+                            <field name="amount" widget="monetary" sum="Итого"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'confirmed'"
+                                   decoration-info="state == 'draft'"
+                                   decoration-danger="state == 'cancelled'"/>
+                            <field name="currency_id" column_invisible="True"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
