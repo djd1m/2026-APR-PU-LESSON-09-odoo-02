@@ -36,6 +36,11 @@
             "type": "command",
             "command": "node .claude/hooks/autocommit-plans.cjs",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "node .claude/hooks/autopush.cjs",
+            "timeout": 15
           }
         ]
       }
